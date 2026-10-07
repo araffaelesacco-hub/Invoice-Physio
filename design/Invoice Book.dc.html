@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/broadsheet-0c63b38f-3c66-4cb4-910d-3318cfd1f0b0/styles.css">
+<script src="_ds/broadsheet-0c63b38f-3c66-4cb4-910d-3318cfd1f0b0/_ds_bundle.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>body{margin:0;background:var(--color-bg)}a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-800)}input[type=number]::-webkit-inner-spin-button{opacity:.4}</style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);min-height:100vh;font-family:var(--font-body);color:var(--color-text)">
+
+  <aside style="position:sticky;top:0;height:100vh;overflow:auto;padding:28px 28px 24px;display:flex;flex-direction:column;box-sizing:border-box">
+    <div style="border-top:3px solid var(--color-text);padding-top:2px"><div style="border-top:1px solid var(--color-text)"></div></div>
+    <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:11px;letter-spacing:.06em;text-transform:uppercase"><span>{{ businessName }}</span><span>{{ todayLabel }}</span></div>
+    <div style="border-top:1px solid var(--color-text)"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:28px">
+      <span style="font-size:16px;font-style:italic">{{ monthLabel }}</span>
+      <div style="display:flex;gap:2px">
+        <button class="btn btn-ghost" onClick="{{ prevMonth }}" aria-label="Previous month"><i class="ph-duotone ph-caret-left" style="font-size:18px"></i></button>
+        <button class="btn btn-ghost" onClick="{{ nextMonth }}" aria-label="Next month"><i class="ph-duotone ph-caret-right" style="font-size:18px"></i></button>
+      </div>
+    </div>
+    <div class="cmyk-num" style="font-size:84px;font-weight:600;letter-spacing:-.03em;margin-top:14px"><span class="paper">{{ monthTotal }}</span><span class="plate plate-c" aria-hidden="true">{{ monthTotal }}</span><span class="plate plate-m" aria-hidden="true">{{ monthTotal }}</span><span class="plate plate-y" aria-hidden="true">{{ monthTotal }}</span></div>
+    <p style="font-size:16px;line-height:1.45;margin:18px 0 0;text-wrap:pretty">{{ monthSummary }} {{ prevLine }}</p>
+
+    <sc-if value="{{ hasSamples }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:20px;padding:12px 14px;background:var(--color-accent-2-100);color:var(--color-accent-2-800);border-radius:var(--radius-md);font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:6px">
+        <span>These are sample invoices. Put your own details in Settings, then clear the samples.</span>
+        <button class="btn btn-ghost" onClick="{{ clearSamples }}" style="align-self:flex-start;color:var(--color-accent-2-800);padding:2px 0">Clear sample invoices</button>
+      </div>
+    </sc-if>
+
+    <button class="btn btn-primary" onClick="{{ newInvoice }}" style="margin-top:24px;height:46px;font-size:15px"><i class="ph-duotone ph-pen-nib" style="font-size:18px"></i>New invoice</button>
+
+    <div style="display:flex;flex-direction:column;gap:2px;margin:22px -12px 0">
+      <sc-for list="{{ monthInvoices }}" as="inv" hint-placeholder-count="4">
+        <button onClick="{{ inv.open }}" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:10px 12px;border-radius:var(--radius-md);background:{{ inv.bg }}" style-hover="background:var(--color-neutral-200)">
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:{{ inv.kickerColor }}">{{ inv.kicker }}</span>
+            <span style="font-size:17px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ inv.client }}</span>
+          </span>
+          <span style="font-size:15px;flex:none">{{ inv.amount }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto;padding-top:28px;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px">
+      <button class="btn btn-ghost" onClick="{{ openSettings }}"><i class="ph-duotone ph-gear-six" style="font-size:17px"></i>Settings</button>
+      <button class="btn btn-ghost" onClick="{{ backup }}"><i class="ph-duotone ph-floppy-disk" style="font-size:17px"></i>Backup</button>
+    </div>
+  </aside>
+
+  <main style="padding:28px clamp(20px,3vw,48px) 64px;min-width:0">
+
+    <sc-if value="{{ isInvoice }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:794px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+          <div style="margin-right:auto;display:flex;flex-direction:column">
+            <span style="font-size:22px;font-weight:600">Invoice {{ cur.number }}</span>
+            <span style="font-size:13px;color:{{ statusColor }}">{{ statusText }}</span>
+          </div>
+          <button class="btn btn-ghost btn-icon" onClick="{{ deleteInvoice }}" title="Delete invoice" aria-label="Delete invoice" style="color:var(--color-neutral-700)"><i class="ph-duotone ph-trash" style="font-size:18px"></i></button>
+          <button class="btn btn-secondary" onClick="{{ download }}"><i class="ph-duotone ph-file-pdf" style="font-size:17px;color:var(--color-accent)"></i>Download PDF</button>
+          <button class="btn btn-primary" onClick="{{ share }}" disabled="{{ shareDisabled }}" style="min-width:120px"><i class="ph-duotone ph-paper-plane-tilt" style="font-size:17px"></i>{{ shareLabel }}</button>
+        </div>
+
+        <sc-if value="{{ hasWarnings }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:12px 16px;background:var(--color-accent-2-100);color:var(--color-accent-2-800);border-radius:var(--radius-md);font-size:14px;line-height:1.5">
+            <div style="font-weight:600">Before you can send this invoice:</div>
+            <sc-for list="{{ warnings }}" as="w" hint-placeholder-count="1"><div>{{ w }}</div></sc-for>
+          </div>
+        </sc-if>
+
+        <div style="position:relative;background:var(--color-neutral-100);box-shadow:var(--shadow-md);padding:clamp(32px,5vw,64px) clamp(24px,4vw,64px) 56px;min-height:1000px;display:flex;flex-direction:column;box-sizing:border-box">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
+            <div style="font-size:48px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+            <div style="display:grid;grid-template-columns:auto 150px;gap:4px 16px;font-size:13px;align-items:baseline">
+              <span style="color:var(--color-neutral-700)">Number</span>
+              <input value="{{ cur.number }}" onChange="{{ onNumber }}" aria-label="Invoice number" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
+              <span style="color:var(--color-neutral-700)">Issued</span>
+              <input type="date" value="{{ cur.issued }}" onChange="{{ onIssued }}" aria-label="Issue date" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
+              <span style="color:var(--color-neutral-700)">Due</span>
+              <span>On receipt</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;margin-top:48px;font-size:13px;line-height:1.55;overflow-wrap:anywhere">
+            <div>
+              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:4px">From</div>
+              <div style="font-size:15px;font-weight:600">{{ st.yourName }}</div>
+              <div>{{ st.businessName }}</div>
+              <div>ABN {{ st.abn }}</div>
+              <div>{{ fromContact }}</div>
+              <button class="btn btn-ghost" onClick="{{ openSettings }}" style="font-size:12px;padding:2px 0;margin-top:4px">Change in Settings</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Bill to</div>
+              <input list="client-list" value="{{ cur.client.name }}" onChange="{{ onClientName }}" placeholder="Client name" aria-label="Client name" style="font:inherit;font-size:15px;font-weight:600;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
+              <input type="email" value="{{ cur.client.email }}" onChange="{{ onClientEmail }}" placeholder="Client email (optional)" aria-label="Client email" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
+              <datalist id="client-list"><sc-for list="{{ clientNames }}" as="c" hint-placeholder-count="0"><option value="{{ c }}"></option></sc-for></datalist>
+            </div>
+          </div>
+
+          <div style="margin-top:48px;font-size:13px">
+            <div style="display:grid;grid-template-columns:112px minmax(120px,1fr) 64px 80px 56px;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--color-neutral-300);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)"><span>Date</span><span>Service</span><span>Duration</span><span style="text-align:right">Amount</span></div>
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+              <div style="position:relative;padding:8px 0">
+                <div style="display:grid;grid-template-columns:112px minmax(120px,1fr) 64px 80px 56px;gap:12px;align-items:baseline">
+                  <input type="date" value="{{ l.date }}" onChange="{{ l.onDate }}" aria-label="Session date" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
+                  <span style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0">
+                    <select value="{{ l.serviceName }}" onChange="{{ l.onService }}" aria-label="Service" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;min-width:0;max-width:100%">
+                      <sc-for list="{{ l.options }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+                    </select>
+                    <span style="font-size:12px;color:var(--color-neutral-700);flex:none">{{ l.rateNote }}</span>
+                  </span>
+                  <span style="display:flex;align-items:baseline;gap:4px"><input type="number" min="5" step="5" value="{{ l.duration }}" onChange="{{ l.onDuration }}" aria-label="Duration in minutes" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:44px">min</span>
+                  <span style="text-align:right">{{ l.amount }}</span>
+                  <span style="display:flex;gap:2px;justify-content:flex-end;align-self:center">
+                    <button class="btn btn-ghost" onClick="{{ l.toggleTravel }}" title="{{ l.travelLabel }}" aria-label="{{ l.travelLabel }}" style="padding:4px;color:{{ l.travelColor }}"><i class="ph-duotone ph-car-simple" style="font-size:18px"></i></button>
+                    <button class="btn btn-ghost" onClick="{{ l.remove }}" title="Remove session" aria-label="Remove session" style="padding:4px;color:var(--color-neutral-600)"><i class="ph-duotone ph-x" style="font-size:16px"></i></button>
+                  </span>
+                </div>
+                <sc-if value="{{ l.travel }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:112px minmax(120px,1fr) 64px 80px 56px;gap:12px;padding-top:6px;color:var(--color-neutral-700)"><span></span><span>Home visit travel</span><span></span><span style="text-align:right">{{ l.travelAmount }}</span></div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <button class="btn btn-ghost" onClick="{{ addLine }}" style="margin-top:6px;padding-left:0"><i class="ph-duotone ph-plus" style="font-size:16px"></i>Add session</button>
+            <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:28px;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-neutral-300)"><span style="font-size:14px">Total (AUD)</span><span style="font-size:28px;font-weight:600">{{ curTotal }}</span></div>
+            <div style="text-align:right;font-size:12px;color:var(--color-neutral-700);margin-top:4px">No GST has been charged.</div>
+          </div>
+
+          <div style="margin-top:auto;padding-top:48px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;font-size:13px;line-height:1.55;overflow-wrap:anywhere">
+            <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:4px">Bank transfer</div><div>{{ st.accountName }}</div><div>BSB {{ st.bsb }} · Account {{ st.accountNumber }}</div><div>Reference {{ cur.number }}</div></div>
+            <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:4px">PayID</div><div>{{ st.payId }}</div><div>Reference {{ cur.number }}</div></div>
+          </div>
+          <div style="margin-top:28px;font-size:13px;font-style:italic;color:var(--color-neutral-700)">{{ thanks }}</div>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700)">Anything with a dashed underline can be edited. The car icon adds or removes the travel fee for that visit. Changes save automatically.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:760px;display:flex;flex-direction:column;gap:44px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <h2 style="margin:0">Settings</h2>
+          <button class="btn btn-secondary" onClick="{{ closeSettings }}">Done</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <h4 style="margin:0">Your details</h4>
+          <p style="margin:0;font-size:14px;color:var(--color-neutral-700)">Your name or business name and your ABN must appear on every invoice.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+            <div class="field"><label>Your name</label><input class="input" value="{{ st.yourName }}" onChange="{{ set.yourName }}"></div>
+            <div class="field"><label>Business name</label><input class="input" value="{{ st.businessName }}" onChange="{{ set.businessName }}"></div>
+            <div class="field"><label>ABN</label><input class="input" value="{{ st.abn }}" onChange="{{ set.abn }}" placeholder="11 digits"></div>
+            <div class="field"><label>Phone</label><input class="input" value="{{ st.phone }}" onChange="{{ set.phone }}"></div>
+            <div class="field"><label>Email</label><input class="input" value="{{ st.email }}" onChange="{{ set.email }}"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <h4 style="margin:0">How clients pay you</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+            <div class="field"><label>Account name</label><input class="input" value="{{ st.accountName }}" onChange="{{ set.accountName }}"></div>
+            <div class="field"><label>BSB</label><input class="input" value="{{ st.bsb }}" onChange="{{ set.bsb }}"></div>
+            <div class="field"><label>Account number</label><input class="input" value="{{ st.accountNumber }}" onChange="{{ set.accountNumber }}"></div>
+            <div class="field"><label>PayID</label><input class="input" value="{{ st.payId }}" onChange="{{ set.payId }}"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h4 style="margin:0">Services and prices</h4>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 110px 100px 36px;gap:12px;font-size:12px;color:var(--color-neutral-700)"><span>Service</span><span>Pricing</span><span>Price</span><span>Usual length</span><span></span></div>
+          <sc-for list="{{ services }}" as="sv" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 110px 100px 36px;gap:12px;align-items:center">
+              <input class="input" value="{{ sv.name }}" onChange="{{ sv.onName }}" aria-label="Service name">
+              <select class="input" value="{{ sv.pricing }}" onChange="{{ sv.onPricing }}" aria-label="Pricing"><option value="fixed">Fixed price</option><option value="hourly">Hourly rate</option></select>
+              <div style="display:flex;align-items:center;gap:6px"><input class="input" type="number" min="0" value="{{ sv.price }}" onChange="{{ sv.onPrice }}" aria-label="Price"><span style="font-size:13px;color:var(--color-neutral-700);flex:none">{{ sv.unit }}</span></div>
+              <div style="display:flex;align-items:center;gap:6px"><input class="input" type="number" min="5" step="5" value="{{ sv.duration }}" onChange="{{ sv.onDuration }}" aria-label="Usual length"><span style="font-size:13px;color:var(--color-neutral-700)">min</span></div>
+              <button class="btn btn-ghost btn-icon" onClick="{{ sv.remove }}" aria-label="Remove service" style="color:var(--color-neutral-600)"><i class="ph-duotone ph-x" style="font-size:16px"></i></button>
+            </div>
+          </sc-for>
+          <button class="btn btn-ghost" onClick="{{ addService }}" style="align-self:flex-start;padding-left:0"><i class="ph-duotone ph-plus" style="font-size:16px"></i>Add service</button>
+          <div class="field" style="max-width:220px;margin-top:8px"><label>Home visit travel fee ($)</label><input class="input" type="number" min="0" value="{{ st.travelFee }}" onChange="{{ set.travelFee }}"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h4 style="margin:0">Your data</h4>
+          <p style="margin:0;font-size:14px;line-height:1.55;max-width:620px;text-wrap:pretty">Everything is saved in this browser on this Mac and nowhere else. Clearing your browser's website data deletes it, so download a backup now and then and keep it somewhere safe.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <button class="btn btn-secondary" onClick="{{ backup }}"><i class="ph-duotone ph-download-simple" style="font-size:17px;color:var(--color-accent)"></i>Download backup</button>
+            <button class="btn btn-secondary" onClick="{{ restoreClick }}"><i class="ph-duotone ph-upload-simple" style="font-size:17px;color:var(--color-accent)"></i>Restore from backup</button>
+            <input type="file" accept=".json,application/json" ref="{{ restoreRef }}" onChange="{{ onRestoreFile }}" style="display:none">
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:520px;padding-top:80px">
+        <h2 style="margin:0 0 10px">No invoice open</h2>
+        <p style="font-size:16px;color:var(--color-neutral-700)">Pick one from the list, or start a new one.</p>
+        <button class="btn btn-primary" onClick="{{ newInvoice }}" style="margin-top:8px">New invoice</button>
+      </div>
+    </sc-if>
+  </main>
+
+  <div style="position:absolute;left:-10000px;top:0">
+    <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ printRef }}" style="width:794px;min-height:1123px;box-sizing:border-box;background:#ffffff;padding:68px 68px 56px;display:flex;flex-direction:column;font-family:var(--font-body);color:var(--color-text)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:52px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+          <div style="display:grid;grid-template-columns:auto auto;gap:3px 18px;font-size:14px;line-height:1.5"><span style="color:var(--color-neutral-700)">Number</span><span>{{ cur.number }}</span><span style="color:var(--color-neutral-700)">Issued</span><span>{{ issuedLong }}</span><span style="color:var(--color-neutral-700)">Due</span><span>On receipt</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:52px;font-size:14px;line-height:1.55">
+          <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:4px">From</div><div style="font-size:16px;font-weight:600">{{ st.yourName }}</div><div>{{ st.businessName }}</div><div>ABN {{ st.abn }}</div><div>{{ fromContact }}</div></div>
+          <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:4px">Bill to</div><div style="font-size:16px;font-weight:600">{{ cur.client.name }}</div><div>{{ cur.client.email }}</div></div>
+        </div>
+        <div style="margin-top:52px;font-size:14px">
+          <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 80px 96px;gap:14px;padding-bottom:9px;border-bottom:1px solid var(--color-neutral-300);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)"><span>Date</span><span>Service</span><span>Duration</span><span style="text-align:right">Amount</span></div>
+          <sc-for list="{{ lines }}" as="l" hint-placeholder-count="0">
+            <div style="padding:9px 0">
+              <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 80px 96px;gap:14px"><span>{{ l.dateMed }}</span><span>{{ l.printService }}</span><span>{{ l.duration }} min</span><span style="text-align:right">{{ l.amount }}</span></div>
+              <sc-if value="{{ l.travel }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:110px minmax(0,1fr) 80px 96px;gap:14px;padding-top:5px;color:var(--color-neutral-700)"><span></span><span>Home visit travel</span><span></span><span style="text-align:right">{{ l.travelAmount }}</span></div></sc-if>
+            </div>
+          </sc-for>
+          <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:28px;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-neutral-300)"><span style="font-size:15px">Total (AUD)</span><span style="font-size:30px;font-weight:600">{{ curTotal }}</span></div>
+          <div style="text-align:right;font-size:12px;color:var(--color-neutral-700);margin-top:4px">No GST has been charged.</div>
+        </div>
+        <div style="margin-top:auto;padding-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:32px;font-size:14px;line-height:1.55">
+          <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:4px">Bank transfer</div><div>{{ st.accountName }}</div><div>BSB {{ st.bsb }} · Account {{ st.accountNumber }}</div><div>Reference {{ cur.number }}</div></div>
+          <div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:4px">PayID</div><div>{{ st.payId }}</div><div>Reference {{ cur.number }}</div></div>
+        </div>
+        <div style="margin-top:28px;font-size:14px;font-style:italic;color:var(--color-neutral-700)">{{ thanks }}</div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);max-width:520px;padding:14px 18px;background:var(--color-neutral-900);color:var(--color-bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);font-size:14px;line-height:1.5">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  KEY = 'physio-invoice-book-v1';
+  printRef = React.createRef();
+  restoreRef = React.createRef();
+  state = this.initialState();
+
+  pad(n) { return String(n).padStart(2, '0'); }
+  uid() { return Math.random().toString(36).slice(2, 10); }
+  todayISO() { const d = new Date(); return `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`; }
+  parse(iso) { const [y, m, d] = (iso || this.todayISO()).split('-').map(Number); return new Date(y, m - 1, d || 1); }
+  fmt(iso, o) { return this.parse(iso).toLocaleDateString('en-AU', o); }
+  money(n) { return (Number(n) || 0).toLocaleString('en-AU', { style: 'currency', currency: 'AUD' }); }
+  money0(n) { return (Number(n) || 0).toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }); }
+  lineAmount(l) { return l.pricing === 'hourly' ? Math.round((Number(l.price) || 0) * (Number(l.duration) || 0) / 60 * 100) / 100 : Number(l.price) || 0; }
+  invTotal(inv) { return inv.lines.reduce((a, l) => a + this.lineAmount(l) + (l.travel ? Number(l.travelFee) || 0 : 0), 0); }
+  sortDesc(a, b) { return b.issued.localeCompare(a.issued) || b.number.localeCompare(a.number); }
+
+  seed() {
+    const services = [
+      { id: 's1', name: 'Initial assessment', pricing: 'fixed', price: 140, duration: 60 },
+      { id: 's2', name: 'Follow-up', pricing: 'fixed', price: 110, duration: 45 },
+      { id: 's3', name: 'Exercise program', pricing: 'hourly', price: 120, duration: 45 },
+    ];
+    const S = Object.fromEntries(services.map(s => [s.id, s]));
+    const L = (date, sid, dur) => ({ id: this.uid(), date, serviceName: S[sid].name, pricing: S[sid].pricing, price: S[sid].price, duration: dur || S[sid].duration, travel: true, travelFee: 25 });
+    const I = (number, issued, name, email, lines, sent) => ({ id: this.uid(), number, issued, client: { name, email }, lines, sentAt: sent ? issued : null, sentVia: sent ? 'Shared' : null, sample: true });
+    return {
+      settings: { yourName: 'Sam Harper', businessName: 'Harper Physiotherapy', abn: '51 824 753 556', phone: '0400 123 456', email: 'sam@harperphysio.com.au', accountName: 'Harper Physiotherapy', bsb: '062-000', accountNumber: '1234 5678', payId: 'sam@harperphysio.com.au', travelFee: 25, services },
+      invoices: [
+        I('2026-008', '2026-09-08', 'Helen Carter', 'helen.carter@email.com', [L('2026-09-01', 's1'), L('2026-09-04', 's2'), L('2026-09-08', 's2')], true),
+        I('2026-009', '2026-09-18', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-09-11', 's1'), L('2026-09-18', 's2')], true),
+        I('2026-010', '2026-09-29', 'Priya Shah', 'priya.shah@email.com', [L('2026-09-22', 's1'), L('2026-09-29', 's3', 60)], true),
+        I('2026-011', '2026-10-01', "Daniel O'Brien", 'daniel.obrien@email.com', [L('2026-10-01', 's1')], true),
+        I('2026-012', '2026-10-02', 'Priya Shah', 'priya.shah@email.com', [L('2026-10-02', 's2')], true),
+        I('2026-013', '2026-10-05', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-10-02', 's2'), L('2026-10-05', 's2')], true),
+        I('2026-014', '2026-10-07', 'Margaret Lee', 'margaret.lee@email.com', [L('2026-09-30', 's1'), L('2026-10-02', 's2'), L('2026-10-06', 's3')], false),
+      ],
+    };
+  }
+
+  initialState() {
+    let data = null;
+    try { const raw = localStorage.getItem(this.KEY); if (raw) data = JSON.parse(raw); } catch (e) {}
+    if (!data || !data.settings || !Array.isArray(data.invoices)) data = this.seed();
+    const latest = [...data.invoices].sort((a, b) => this.sortDesc(a, b))[0];
+    return { data, view: latest ? 'invoice' : 'empty', currentId: latest ? latest.id : null, month: this.todayISO().slice(0, 7), toast: null, busy: false };
+  }
+
+  setData(fn) {
+    this.setState(s => {
+      const data = structuredClone(s.data);
+      fn(data);
+      try { localStorage.setItem(this.KEY, JSON.stringify(data)); } catch (e) {}
+      return { data };
+    });
+  }
+  updInv(fn) { const id = this.state.currentId; this.setData(d => { const inv = d.invoices.find(i => i.id === id); if (inv) fn(inv, d); }); }
+  updLine(idx, patch) { this.updInv(inv => { Object.assign(inv.lines[idx], patch); }); }
+  cur() { return this.state.data.invoices.find(i => i.id === this.state.currentId); }
+  showToast(msg) { clearTimeout(this.toastT); this.setState({ toast: msg }); this.toastT = setTimeout(() => this.setState({ toast: null }), 7000); }
+
+  nextNumber(data, year) {
+    const max = data.invoices.reduce((m, i) => { const mt = /^(\d{4})-(\d+)$/.exec(i.number || ''); return mt && mt[1] === String(year) ? Math.max(m, Number(mt[2])) : m; }, 0);
+    return `${year}-${String(max + 1).padStart(3, '0')}`;
+  }
+  newLine(st, date) {
+    const sv = st.services[0] || { name: 'Physiotherapy session', pricing: 'fixed', price: 0, duration: 45 };
+    return { id: this.uid(), date, serviceName: sv.name, pricing: sv.pricing, price: sv.price, duration: sv.duration, travel: true, travelFee: Number(st.travelFee) || 0 };
+  }
+  newInvoice() {
+    const today = this.todayISO();
+    const id = this.uid();
+    this.setData(d => { d.invoices.push({ id, number: this.nextNumber(d, today.slice(0, 4)), issued: today, client: { name: '', email: '' }, lines: [this.newLine(d.settings, today)], sentAt: null, sentVia: null }); });
+    this.setState({ view: 'invoice', currentId: id, month: today.slice(0, 7) });
+  }
+
+  warningsFor(inv, st) {
+    const w = [];
+    if (!st.yourName.trim() && !st.businessName.trim()) w.push('Add your name or business name in Settings.');
+    if (!st.abn.trim()) w.push('Add your ABN in Settings.');
+    if (!inv.client.name.trim()) w.push('Add the client\u2019s name.');
+    if (!inv.lines.length) w.push('Add at least one session.');
+    return w;
+  }
+
+  pdfKey() { const c = this.cur(); return c ? JSON.stringify([c, this.state.data.settings]) : null; }
+  async makePdf() {
+    const el = this.printRef.current;
+    if (!el || !window.html2canvas || !window.jspdf) throw new Error('PDF tools are still loading. Try again in a moment.');
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false });
+    const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const pw = 595.28, ph = 841.89, pagePx = Math.floor(canvas.width * ph / pw);
+    for (let y = 0, first = true; y < canvas.height - 4; y += pagePx, first = false) {
+      const h = Math.min(pagePx, canvas.height - y);
+      const c = document.createElement('canvas'); c.width = canvas.width; c.height = pagePx;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+      if (!first) pdf.addPage();
+      pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pw, ph);
+    }
+    return pdf.output('blob');
+  }
+  async getPdf() {
+    const key = this.pdfKey();
+    if (this.pdfCache && this.pdfCache.key === key) return this.pdfCache.blob;
+    const blob = await this.makePdf();
+    this.pdfCache = { key, blob };
+    return blob;
+  }
+  schedulePdf() {
+    clearTimeout(this.pdfT);
+    const key = this.pdfKey();
+    if (!key || (this.pdfCache && this.pdfCache.key === key)) return;
+    this.pdfT = setTimeout(() => { this.getPdf().catch(() => {}); }, 1200);
+  }
+  componentDidMount() { this.schedulePdf(); }
+  componentDidUpdate(pp, ps) { if (ps.data !== this.state.data || ps.currentId !== this.state.currentId) this.schedulePdf(); }
+  componentWillUnmount() { clearTimeout(this.pdfT); clearTimeout(this.toastT); }
+
+  fileName(inv) { return `Invoice ${inv.number}.pdf`; }
+  downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  message(inv) {
+    const st = this.state.data.settings;
+    const first = inv.client.name.trim().split(/\s+/)[0] || 'there';
+    return { subject: `Invoice ${inv.number} from ${st.businessName || st.yourName}`, text: `Hi ${first},\n\nPlease find attached invoice ${inv.number} for ${this.money(this.invTotal(inv))}. Payment details are on the invoice.\n\nThank you,\n${st.yourName}` };
+  }
+  markSent(via) { const today = this.todayISO(); this.updInv(inv => { inv.sentAt = today; inv.sentVia = via; }); }
+  emailFallback(inv, blob) {
+    const m = this.message(inv);
+    this.downloadBlob(blob, this.fileName(inv));
+    window.open(`mailto:${encodeURIComponent(inv.client.email || '')}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.text)}`, '_blank');
+    this.markSent('Email');
+    this.showToast('This browser can\u2019t attach files when sharing. The PDF has been downloaded: attach it to the email that just opened. Safari on Mac attaches it for you.');
+  }
+  async share() {
+    const inv = this.cur(); if (!inv) return;
+    const st = this.state.data.settings;
+    if (this.warningsFor(inv, st).length) return;
+    const key = this.pdfKey();
+    const ready = this.pdfCache && this.pdfCache.key === key;
+    let blob;
+    try {
+      if (ready) blob = this.pdfCache.blob;
+      else { this.setState({ busy: true }); blob = await this.getPdf(); this.setState({ busy: false }); }
+    } catch (e) { this.setState({ busy: false }); this.showToast('Couldn\u2019t create the PDF. ' + (e.message || '')); return; }
+    const file = new File([blob], this.fileName(inv), { type: 'application/pdf' });
+    const m = this.message(inv);
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: m.subject, text: m.text }); this.markSent('Shared'); }
+      catch (e) {
+        if (e.name === 'AbortError') return;
+        if (e.name === 'NotAllowedError' && !ready) { this.showToast('The PDF is ready. Click Send again to choose Mail, Messages or WhatsApp.'); return; }
+        this.emailFallback(inv, blob);
+      }
+    } else this.emailFallback(inv, blob);
+  }
+  async download() {
+    const inv = this.cur(); if (!inv) return;
+    try { this.setState({ busy: true }); const blob = await this.getPdf(); this.downloadBlob(blob, this.fileName(inv)); }
+    catch (e) { this.showToast('Couldn\u2019t create the PDF. ' + (e.message || '')); }
+    finally { this.setState({ busy: false }); }
+  }
+  deleteInvoice() {
+    const inv = this.cur(); if (!inv) return;
+    if (!window.confirm(`Delete invoice ${inv.number}? This can't be undone.`)) return;
+    const rest = this.state.data.invoices.filter(i => i.id !== inv.id).sort((a, b) => this.sortDesc(a, b));
+    const next = rest.find(i => i.issued.slice(0, 7) === this.state.month) || rest[0];
+    this.setData(d => { d.invoices = d.invoices.filter(i => i.id !== inv.id); });
+    this.setState({ currentId: next ? next.id : null, view: next ? 'invoice' : 'empty' });
+  }
+  backup() {
+    const blob = new Blob([JSON.stringify(this.state.data, null, 2)], { type: 'application/json' });
+    this.downloadBlob(blob, `invoice-book-backup-${this.todayISO()}.json`);
+  }
+  async onRestoreFile(e) {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!data.settings || !Array.isArray(data.invoices)) throw new Error('bad');
+      if (!window.confirm(`Replace everything with this backup (${data.invoices.length} invoices)?`)) return;
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+      const latest = [...data.invoices].sort((a, b) => this.sortDesc(a, b))[0];
+      this.setState({ data, currentId: latest ? latest.id : null, view: 'settings' });
+      this.showToast('Backup restored.');
+    } catch (err) { this.showToast('That file isn\u2019t an invoice book backup.'); }
+  }
+  shiftMonth(delta) { const [y, m] = this.state.month.split('-').map(Number); const d = new Date(y, m - 1 + delta, 1); this.setState({ month: `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}` }); }
+
+  renderVals() {
+    const { data, view, currentId, month, toast, busy } = this.state;
+    const st = data.settings;
+    const today = this.todayISO();
+    const [my, mm] = month.split('-').map(Number);
+    const mDate = new Date(my, mm - 1, 1);
+    const mName = mDate.toLocaleDateString('en-AU', { month: 'long' });
+    const isNow = month === today.slice(0, 7);
+    const inMonth = data.invoices.filter(i => i.issued.slice(0, 7) === month).sort((a, b) => this.sortDesc(a, b));
+    const total = inMonth.reduce((a, i) => a + this.invTotal(i), 0);
+    const sessions = inMonth.reduce((a, i) => a + i.lines.length, 0);
+    const pDate = new Date(my, mm - 2, 1);
+    const pKey = `${pDate.getFullYear()}-${this.pad(pDate.getMonth() + 1)}`;
+    const pTotal = data.invoices.filter(i => i.issued.slice(0, 7) === pKey).reduce((a, i) => a + this.invTotal(i), 0);
+    const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+    const cur = data.invoices.find(i => i.id === currentId) || null;
+    const set = {};
+    ['yourName', 'businessName', 'abn', 'phone', 'email', 'accountName', 'bsb', 'accountNumber', 'payId'].forEach(k => { set[k] = e => { const v = e.target.value; this.setData(d => { d.settings[k] = v; }); }; });
+    set.travelFee = e => { const v = Number(e.target.value) || 0; this.setData(d => { d.settings.travelFee = v; }); };
+
+    const names = st.services.map(s => s.name);
+    const lines = cur ? cur.lines.map((l, idx) => ({
+      ...l,
+      amount: this.money(this.lineAmount(l)),
+      rateNote: l.pricing === 'hourly' ? `${this.money0(l.price)}/h` : '',
+      printService: l.pricing === 'hourly' ? `Physiotherapy: ${l.serviceName.toLowerCase()} (${this.money0(l.price)}/h)` : `Physiotherapy: ${l.serviceName.toLowerCase()}`,
+      travelAmount: this.money(l.travelFee),
+      travelColor: l.travel ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+      travelLabel: l.travel ? 'Remove travel fee' : 'Add travel fee',
+      options: names.includes(l.serviceName) ? names : [l.serviceName, ...names],
+      dateMed: this.fmt(l.date, { day: 'numeric', month: 'short', year: 'numeric' }),
+      onDate: e => this.updLine(idx, { date: e.target.value }),
+      onService: e => { const sv = st.services.find(s => s.name === e.target.value); if (sv) this.updLine(idx, { serviceName: sv.name, pricing: sv.pricing, price: sv.price, duration: sv.duration }); },
+      onDuration: e => this.updLine(idx, { duration: Number(e.target.value) || 0 }),
+      toggleTravel: () => this.updLine(idx, { travel: !l.travel, travelFee: Number(st.travelFee) || 0 }),
+      remove: () => this.updInv(inv => { inv.lines.splice(idx, 1); }),
+    })) : [];
+    const warnings = cur ? this.warningsFor(cur, st) : [];
+    const first = cur ? cur.client.name.trim().split(/\s+/)[0] : '';
+    const clients = {};
+    data.invoices.forEach(i => { if (i.client.name.trim()) clients[i.client.name.trim()] = i.client.email; });
+
+    return {
+      businessName: st.businessName || st.yourName || 'Invoice book',
+      todayLabel: this.fmt(today, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+      monthLabel: isNow ? `${mName} so far` : mDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }),
+      monthTotal: this.money0(total),
+      monthSummary: inMonth.length ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.` : `No invoices in ${mName}.`,
+      prevLine: pTotal > 0 ? `${pDate.toLocaleDateString('en-AU', { month: 'long' })} closed at ${this.money0(pTotal)}.` : '',
+      prevMonth: () => this.shiftMonth(-1),
+      nextMonth: () => this.shiftMonth(1),
+      hasSamples: data.invoices.some(i => i.sample),
+      clearSamples: () => {
+        const rest = data.invoices.filter(i => !i.sample);
+        this.setData(d => { d.invoices = d.invoices.filter(i => !i.sample); });
+        const keep = rest.find(i => i.id === currentId);
+        this.setState({ currentId: keep ? keep.id : null, view: view === 'settings' ? 'settings' : (keep ? 'invoice' : 'empty') });
+      },
+      newInvoice: () => this.newInvoice(),
+      monthInvoices: inMonth.map(i => ({
+        client: i.client.name.trim() || 'New client',
+        kicker: `${i.number} · ${i.sentAt ? this.fmt(i.issued, { day: 'numeric', month: 'short' }) : 'Not sent'}`,
+        kickerColor: i.sentAt ? 'var(--color-neutral-700)' : 'var(--color-accent-2-700)',
+        amount: this.money(this.invTotal(i)),
+        bg: view === 'invoice' && i.id === currentId ? 'var(--color-surface)' : 'transparent',
+        open: () => this.setState({ view: 'invoice', currentId: i.id }),
+      })),
+      openSettings: () => this.setState({ view: 'settings' }),
+      closeSettings: () => this.setState({ view: cur ? 'invoice' : 'empty' }),
+      backup: () => this.backup(),
+      restoreClick: () => this.restoreRef.current && this.restoreRef.current.click(),
+      restoreRef: this.restoreRef,
+      onRestoreFile: e => this.onRestoreFile(e),
+
+      isInvoice: view === 'invoice' && !!cur,
+      isSettings: view === 'settings',
+      isEmpty: view === 'empty' || (view === 'invoice' && !cur),
+      hasCur: !!cur,
+      cur: cur || { number: '', issued: today, client: { name: '', email: '' } },
+      st,
+      set,
+      fromContact: [st.phone, st.email].filter(Boolean).join(' · '),
+      statusText: cur && cur.sentAt ? `Sent ${this.fmt(cur.sentAt, { day: 'numeric', month: 'long', year: 'numeric' })}` : 'Not sent yet',
+      statusColor: cur && cur.sentAt ? 'var(--color-neutral-700)' : 'var(--color-accent-2-700)',
+      issuedLong: cur ? this.fmt(cur.issued, { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+      onNumber: e => { const v = e.target.value; this.updInv(inv => { inv.number = v; }); },
+      onIssued: e => { const v = e.target.value; if (v) { this.updInv(inv => { inv.issued = v; }); this.setState({ month: v.slice(0, 7) }); } },
+      onClientName: e => { const v = e.target.value; this.updInv(inv => { inv.client.name = v; if (clients[v.trim()] && !inv.client.email) inv.client.email = clients[v.trim()]; }); },
+      onClientEmail: e => { const v = e.target.value; this.updInv(inv => { inv.client.email = v; }); },
+      clientNames: Object.keys(clients),
+      lines,
+      addLine: () => this.updInv((inv, d) => { const last = inv.lines[inv.lines.length - 1]; const l = this.newLine(d.settings, today); if (last) Object.assign(l, { serviceName: last.serviceName, pricing: last.pricing, price: last.price, duration: last.duration, travel: last.travel }); inv.lines.push(l); }),
+      curTotal: cur ? this.money(this.invTotal(cur)) : '',
+      thanks: first ? `Thank you, ${first}.` : 'Thank you.',
+      warnings,
+      hasWarnings: warnings.length > 0,
+      shareDisabled: busy || warnings.length > 0,
+      shareLabel: busy ? 'Preparing\u2026' : 'Send',
+      share: () => this.share(),
+      download: () => this.download(),
+      deleteInvoice: () => this.deleteInvoice(),
+      printRef: this.printRef,
+
+      services: st.services.map((sv, idx) => ({
+        ...sv,
+        unit: sv.pricing === 'hourly' ? '/ hour' : '',
+        onName: e => { const v = e.target.value; this.setData(d => { d.settings.services[idx].name = v; }); },
+        onPricing: e => { const v = e.target.value; this.setData(d => { d.settings.services[idx].pricing = v; }); },
+        onPrice: e => { const v = Number(e.target.value) || 0; this.setData(d => { d.settings.services[idx].price = v; }); },
+        onDuration: e => { const v = Number(e.target.value) || 0; this.setData(d => { d.settings.services[idx].duration = v; }); },
+        remove: () => this.setData(d => { d.settings.services.splice(idx, 1); }),
+      })),
+      addService: () => this.setData(d => { d.settings.services.push({ id: this.uid(), name: 'New service', pricing: 'fixed', price: 0, duration: 45 }); }),
+
+      hasToast: !!toast,
+      toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
