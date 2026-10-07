@@ -4,6 +4,12 @@ Invoicing for a sole-trader physiotherapist in Australia (home visits, not regis
 
 There is no server. Everything is stored in the browser's `localStorage` on your Mac. Use **Backup** to download a JSON copy now and then, and **Settings → Restore from backup** to bring one back.
 
+## Using it without installing anything
+
+`npm run build:single` makes one self-contained file, `dist-single/Invoice Book.html`. Put it somewhere permanent, such as Documents, and double-click it to open it in Safari. It needs no server or internet connection.
+
+Safari keeps the invoices for that file at that location. If you move or rename the file, it opens empty, so take a **Backup** first and **Restore** it afterwards.
+
 ## Running it
 
 Requires Node 22.12 or later (`node -v` to check).
