@@ -48,6 +48,7 @@ export function InvoiceView({ inv, st, today, clients, warnings, busy, onUpdate,
       )}
 
       <div className="sheet">
+        {st.logo && <img className="sheet-logo" src={st.logo} alt={st.businessName || st.yourName || 'Logo'} />}
         <div className="sheet-head">
           <div className="sheet-title">Invoice</div>
           <div className="sheet-meta">

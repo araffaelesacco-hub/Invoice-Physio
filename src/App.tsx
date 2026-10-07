@@ -245,6 +245,7 @@ export default function App() {
               onDone={() => setView(cur ? 'invoice' : 'empty')}
               onBackup={backup}
               onRestore={restore}
+              onMessage={showToast}
             />
           )}
 

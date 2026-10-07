@@ -1,7 +1,8 @@
 import { useRef, type ChangeEvent } from 'react';
-import { DownloadSimple, Plus, UploadSimple, X } from '@phosphor-icons/react';
+import { DownloadSimple, ImageSquare, Plus, UploadSimple, X } from '@phosphor-icons/react';
 import type { Pricing, Settings } from '../lib/types';
 import { uid } from '../lib/format';
+import { prepareLogo } from '../lib/logo';
 import { NumberInput } from './fields';
 
 type TextKey = 'yourName' | 'businessName' | 'abn' | 'phone' | 'email' | 'accountName' | 'bsb' | 'accountNumber' | 'payId';
@@ -12,10 +13,24 @@ interface Props {
   onDone: () => void;
   onBackup: () => void;
   onRestore: (file: File) => void;
+  onMessage: (msg: string) => void;
 }
 
-export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore }: Props) {
+export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMessage }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+
+  const onLogo = async (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      const logo = await prepareLogo(f);
+      onUpdate(s => { s.logo = logo; });
+    } catch (err) {
+      onMessage((err as Error).message);
+    }
+  };
 
   const field = (key: TextKey, label: string, extra?: { placeholder?: string; type?: string; inputMode?: 'numeric' | 'email' | 'tel' }) => (
     <div className="field">
@@ -52,6 +67,17 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore }: Prop
           {field('abn', 'ABN', { placeholder: '11 digits', inputMode: 'numeric' })}
           {field('phone', 'Phone', { type: 'tel' })}
           {field('email', 'Email', { type: 'email' })}
+        </div>
+        <div className="field">
+          <label>Logo</label>
+          <div className="logo-row">
+            {st.logo ? <img className="logo-preview" src={st.logo} alt="Your logo" /> : <span className="logo-none">No logo. Invoices start with the heading.</span>}
+            <button className="btn btn-secondary" onClick={() => logoRef.current?.click()}>
+              <ImageSquare size={17} className="icon-accent" />{st.logo ? 'Change logo' : 'Add logo'}
+            </button>
+            {st.logo && <button className="btn btn-ghost" onClick={() => onUpdate(s => { s.logo = ''; })} aria-label="Remove logo">Remove</button>}
+            <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp" onChange={onLogo} hidden />
+          </div>
         </div>
       </section>
 

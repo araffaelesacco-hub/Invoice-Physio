@@ -19,6 +19,8 @@ export interface Settings {
   bsb: string;
   accountNumber: string;
   payId: string;
+  /** Optional logo as a PNG or JPEG data URL, already scaled down. '' when none. */
+  logo: string;
   travelFee: number;
   services: Service[];
 }

@@ -33,3 +33,21 @@ describe('invoice PDF', () => {
     expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(1);
   });
 });
+
+describe('invoice PDF logo', () => {
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  const hasImage = (bytes: Uint8Array) => Buffer.from(bytes).toString('latin1').includes('/Subtype /Image');
+
+  it('leaves the logo out when none is set', async () => {
+    const d = seed();
+    expect(hasImage(await buildInvoicePdf(d.invoices[0], d.settings, fonts))).toBe(false);
+  });
+
+  it('embeds the logo when one is set', async () => {
+    const d = seed();
+    d.settings.logo = PNG;
+    const bytes = await buildInvoicePdf(d.invoices[0], d.settings, fonts);
+    expect(hasImage(bytes)).toBe(true);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+});

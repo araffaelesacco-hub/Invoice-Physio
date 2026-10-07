@@ -131,6 +131,7 @@ export function normalizeData(x: unknown): Data | null {
     bsb: str(s.bsb),
     accountNumber: str(s.accountNumber),
     payId: str(s.payId),
+    logo: /^data:image\/(png|jpeg);base64,/.test(str(s.logo)) ? str(s.logo) : '',
     travelFee: num(s.travelFee),
     services: (Array.isArray(s.services) ? s.services : []).map(sv => ({
       id: str(sv?.id) || uid(),

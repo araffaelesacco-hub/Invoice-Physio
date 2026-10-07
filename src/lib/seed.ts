@@ -40,6 +40,7 @@ export function seed(): Data {
       bsb: '062-000',
       accountNumber: '1234 5678',
       payId: 'sam@harperphysio.com.au',
+      logo: '',
       travelFee: 25,
       services,
     },

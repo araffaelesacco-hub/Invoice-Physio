@@ -116,4 +116,11 @@ describe('restoring', () => {
     expect(d.invoices[0].client).toEqual({ name: '', email: '' });
     expect(d.invoices[0].lines[0]).toMatchObject({ price: 110, pricing: 'fixed', travel: false });
   });
+  it('keeps only image data URLs as the logo', async () => {
+    const { normalizeData } = await import('./invoice');
+    const withLogo = (logo: unknown) => normalizeData({ settings: { logo }, invoices: [] })!.settings.logo;
+    expect(withLogo('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA');
+    expect(withLogo('https://example.com/logo.png')).toBe('');
+    expect(withLogo(undefined)).toBe('');
+  });
 });
