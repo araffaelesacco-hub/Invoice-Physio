@@ -6,7 +6,7 @@ There is no server. Everything is stored in the browser's `localStorage` on your
 
 ## Running it
 
-Requires Node 20 or later.
+Requires Node 22.12 or later (`node -v` to check).
 
 ```sh
 npm install
