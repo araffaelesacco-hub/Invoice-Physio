@@ -8,6 +8,8 @@ There is no server. Everything is stored in the browser's `localStorage` on your
 
 The app is published at **https://araffaelesacco-hub.github.io/Invoice-Physio/**. Open it in Safari and bookmark it, or use File → Add to Dock. Every change merged into `main` is tested, built and published by `.github/workflows/pages.yml`, so reloading the page picks it up. Your invoices are stored only in Safari on your Mac, for that address; the website serves only the app.
 
+On a phone or a narrow window the layout switches to one column: the month figure and invoice list are one screen, and an open invoice or Settings is another, with a back button. Each device keeps its own copy of your invoices; use **Backup** and **Restore from backup** to move them between your phone and your Mac.
+
 ## Using it without a web address
 
 

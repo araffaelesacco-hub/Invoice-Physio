@@ -96,20 +96,20 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
         <div className="service-grid service-head"><span>Service</span><span>Pricing</span><span>Price</span><span>Usual length</span><span /></div>
         {st.services.map((sv, idx) => (
           <div className="service-grid" key={sv.id}>
-            <input className="input" value={sv.name} onChange={e => { const v = e.target.value; onUpdate(s => { s.services[idx].name = v; }); }} aria-label="Service name" />
-            <select className="input" value={sv.pricing} onChange={e => { const v = e.target.value as Pricing; onUpdate(s => { s.services[idx].pricing = v; }); }} aria-label="Pricing">
+            <input className="input sv-name" value={sv.name} onChange={e => { const v = e.target.value; onUpdate(s => { s.services[idx].name = v; }); }} aria-label="Service name" />
+            <select className="input sv-pricing" value={sv.pricing} onChange={e => { const v = e.target.value as Pricing; onUpdate(s => { s.services[idx].pricing = v; }); }} aria-label="Pricing">
               <option value="fixed">Fixed price</option>
               <option value="hourly">Hourly rate</option>
             </select>
-            <div className="with-unit">
+            <div className="with-unit sv-price">
               <NumberInput className="input" min={0} value={sv.price} onCommit={n => onUpdate(s => { s.services[idx].price = n; })} aria-label="Price" />
               {sv.pricing === 'hourly' && <span className="unit">/ hour</span>}
             </div>
-            <div className="with-unit">
+            <div className="with-unit sv-length">
               <NumberInput className="input" min={5} step={5} value={sv.duration} onCommit={n => onUpdate(s => { s.services[idx].duration = n; })} aria-label="Usual length" />
               <span className="unit">min</span>
             </div>
-            <button className="btn btn-ghost btn-icon remove" onClick={() => onUpdate(s => { s.services.splice(idx, 1); })} aria-label="Remove service">
+            <button className="btn btn-ghost btn-icon remove sv-remove" onClick={() => onUpdate(s => { s.services.splice(idx, 1); })} aria-label="Remove service">
               <X size={16} />
             </button>
           </div>
@@ -126,7 +126,7 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
       <section className="settings-section data">
         <h4>Your data</h4>
         <p className="settings-body">
-          Everything is saved in this browser on this Mac and nowhere else. Clearing your browser's website data deletes it, so download a backup now and then and keep it somewhere safe.
+          Everything is saved in this browser on this device and nowhere else. Your phone and your Mac keep separate copies; use a backup to move them across. Clearing your browser's website data deletes it, so download a backup now and then and keep it somewhere safe.
         </p>
         <div className="data-actions">
           <button className="btn btn-secondary" onClick={onBackup}><DownloadSimple size={17} className="icon-accent" />Download backup</button>
