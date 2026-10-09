@@ -41,7 +41,7 @@ npm run preview   # serve dist/ locally
 - **Privacy:** only the client's name and email are stored, and services are named without conditions or treatment notes. The app makes no network requests (fonts and icons are bundled), with no analytics and no cloud.
 - **PDF:** a vector A4 PDF with Source Serif 4 embedded, so the text is selectable. It is generated in the browser with pdf-lib and runs onto extra pages for long invoices. It's built in the background shortly after each edit, because Safari only allows `navigator.share` straight after a click.
 - **Send** opens the share sheet with the PDF attached and marks the invoice as sent. In browsers that can't share files, it downloads the PDF and opens a pre-filled email instead.
-- **Logo (optional):** add one in Settings → Your details as PNG, JPEG or SVG. Empty margins around the artwork are trimmed off, and the logo is sized by area so that a wide wordmark and a stacked badge get about the same visual weight (up to 260 × 96 px). It's saved with your data (so it's included in backups) and printed above the "Invoice" heading, aligned with it, on screen and in the PDF. Without a logo, the invoice is exactly the original design.
+- **Logo (optional):** upload one in Settings → Logo (PNG, JPG or SVG; a PNG with a transparent background works best). Empty margins around the artwork are trimmed off and it's stored as a PNG up to 600 × 300, saved with your data so backups include it. It sits 20px above the "Invoice" heading, fitted into 220 × 64 px on screen and 240 × 72 px in the PDF, never enlarged.
 - **Paid and unpaid:** **Mark as paid** records the date and how the client paid (bank transfer, PayID, cash or card). The invoice list and the month summary show what's been received and what's still to come. A paid invoice's PDF becomes a receipt: "Paid" beside the heading and in place of the due date, the amount paid and "Balance due $0.00" under the total, and "Payment received" in place of the bank details. Send becomes **Send receipt**. Health funds generally want the amount and date paid on the receipt, and won't accept altered documents.
 - **Records:** sent and paid invoices are locked until you click **Edit anyway**, so they stay the same as the copy your client has. Every invoice has a bin, in the list and in the toolbar, and deleting always asks you to confirm first. For a sent or paid invoice, you also type its number, because the ATO expects business records to be kept for five years.
 - **Sample data:** the first run shows sample settings and invoices. Put your own details in Settings, then use **Clear sample invoices**.
@@ -55,6 +55,6 @@ npm run preview   # serve dist/ locally
 | `src/lib/invoice.ts` | Amounts, numbering, validation, email text, backup checks |
 | `src/lib/pdf.ts` | The A4 PDF layout |
 | `src/lib/format.ts` | Local dates (`YYYY-MM-DD`) and AUD formatting |
-| `src/ds/styles.css`, `public/ds/_ds_bundle.js` | The Broadsheet design system (tokens, components, print-plate filters) |
+| `src/ds/styles.css` | The Broadsheet design system (tokens and components) |
 | `src/assets/fonts/` | Source Serif 4 (SIL Open Font License, `OFL.txt`) |
 | `design_handoff_invoice_book/` | The Claude Design handoff this was built from: the HTML prototype, its runtime, the design-system files and the handoff notes |

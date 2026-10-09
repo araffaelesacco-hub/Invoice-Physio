@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type InputHTMLAttributes } from 'react';
-import { logoSize } from '../lib/logo';
 
 type NumberInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'> & {
   value: number;
@@ -41,33 +40,7 @@ export function NumberInput({ value, onCommit, onFocus, onBlur, ...rest }: Numbe
   );
 }
 
-/** Display figure printed as misregistered C/M/Y plates (Broadsheet .cmyk-num). */
-export function PlateNumeral({ children, className }: { children: string; className?: string }) {
-  return (
-    <div className={`cmyk-num ${className || ''}`}>
-      <span className="paper">{children}</span>
-      <span className="plate plate-c" aria-hidden="true">{children}</span>
-      <span className="plate plate-m" aria-hidden="true">{children}</span>
-      <span className="plate plate-y" aria-hidden="true">{children}</span>
-    </div>
-  );
-}
-
-/** The logo at its display size (see logoSize), worked out once the image has loaded. */
-function LogoImage({ src, className, alt }: { src: string; className: string; alt: string }) {
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  return (
-    <img
-      className={className}
-      src={src}
-      alt={alt}
-      style={size ?? { visibility: 'hidden', width: 0, height: 0 }}
-      onLoad={e => setSize(logoSize(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight))}
-    />
-  );
-}
-
-/** Remounts for each new logo so its size is measured afresh. */
-export function Logo(props: { src: string; className: string; alt: string }) {
-  return <LogoImage key={props.src} {...props} />;
+/** The logo fitted into its box by CSS (max-width / max-height, never enlarged). */
+export function Logo({ src, className, alt }: { src: string; className: string; alt: string }) {
+  return <img className={className} src={src} alt={alt} />;
 }

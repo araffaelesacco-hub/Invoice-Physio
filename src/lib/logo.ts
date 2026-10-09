@@ -1,23 +1,19 @@
-// Logos are trimmed and scaled down in the browser, then kept as a data URL
-// in Settings, so they live in localStorage and travel with backups.
-//
-// Logos come in every shape, from a wide one-line wordmark to a stacked
-// badge, so they're sized by area rather than by height: each gets about
-// the same visual weight, within a maximum width and height. They're stored
-// at four times that size so the PDF prints sharply.
-export const LOGO = { area: 14_000, maxWidth: 260, maxHeight: 96 };
-const SCALE = 4;
+// Logos are trimmed to their artwork and scaled down in the browser, then kept
+// as a PNG data URL in Settings, so they live in localStorage and travel with
+// backups. On the invoice they're fitted into a box: 220 × 64 px on screen and
+// 240 × 72 px in the PDF, never enlarged.
+export const LOGO_STORE = { width: 600, height: 300 };
+export const LOGO_SCREEN = { width: 220, height: 64 };
+export const LOGO_PDF = { width: 240, height: 72 };
 /** Largest working canvas while trimming; bigger sources are scaled down first. */
 const WORK_MAX = 2000;
 const MAX_BYTES = 1_500_000;
 
-/** Display size in CSS px (also used for the PDF) for an image of w × h. */
-export function logoSize(w: number, h: number) {
-  const aspect = w / h;
-  const height = Math.sqrt(LOGO.area / aspect);
-  const width = height * aspect;
-  const k = Math.min(1, LOGO.maxWidth / width, LOGO.maxHeight / height);
-  return { width: Math.round(width * k), height: Math.round(height * k) };
+/** Fit w × h into a box, keeping its proportions and never enlarging it. */
+export function fitLogo(w: number, h: number, box: { width: number; height: number }) {
+  const k = Math.min(1, box.width / w, box.height / h);
+  const r = (n: number) => Math.round(n * 100) / 100; // no float dust like 219.99999
+  return { width: r(w * k), height: r(h * k) };
 }
 
 /** Bounds of the artwork in RGBA pixels: whatever isn't transparent, or, for
@@ -52,10 +48,10 @@ async function decode(src: string): Promise<HTMLImageElement> {
   return img;
 }
 
-/** Trim the empty margin, then scale to four times the display size (never up). */
-function process(img: HTMLImageElement, jpeg: boolean): { data: string; trimmed: boolean } {
-  const sw = img.naturalWidth || LOGO.maxWidth;
-  const sh = img.naturalHeight || LOGO.maxHeight;
+/** Trim the empty margin, then scale to fit 600 × 300 as a PNG (never up). */
+function process(img: HTMLImageElement): { data: string; trimmed: boolean } {
+  const sw = img.naturalWidth || LOGO_STORE.width;
+  const sh = img.naturalHeight || LOGO_STORE.height;
   const k0 = Math.min(1, WORK_MAX / sw, WORK_MAX / sh);
   const work = document.createElement('canvas');
   work.width = Math.max(1, Math.round(sw * k0));
@@ -64,36 +60,29 @@ function process(img: HTMLImageElement, jpeg: boolean): { data: string; trimmed:
   wctx.drawImage(img, 0, 0, work.width, work.height);
   const box = contentBounds(wctx.getImageData(0, 0, work.width, work.height).data, work.width, work.height);
 
-  const target = logoSize(box.width, box.height);
-  const k = Math.min(1, (target.width * SCALE) / box.width);
+  const size = fitLogo(box.width, box.height, LOGO_STORE);
   const out = document.createElement('canvas');
-  out.width = Math.max(1, Math.round(box.width * k));
-  out.height = Math.max(1, Math.round(box.height * k));
+  out.width = Math.max(1, Math.round(size.width));
+  out.height = Math.max(1, Math.round(size.height));
   const ctx = out.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
-  // Photos stay JPEG; everything else becomes PNG so transparency survives.
-  if (jpeg) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, out.width, out.height);
-  }
   ctx.drawImage(work, box.x, box.y, box.width, box.height, 0, 0, out.width, out.height);
-  const data = jpeg ? out.toDataURL('image/jpeg', 0.9) : out.toDataURL('image/png');
   // A few pixels of soft edge don't count, so re-trimming an already trimmed logo is a no-op.
-  return { data, trimmed: work.width - box.width > 4 || work.height - box.height > 4 };
+  return { data: out.toDataURL('image/png'), trimmed: work.width - box.width > 4 || work.height - box.height > 4 };
 }
 
 export async function prepareLogo(file: File): Promise<string> {
-  if (!/^image\/(png|jpeg|gif|webp|svg\+xml)$/.test(file.type)) throw new Error('Choose a PNG, JPEG or SVG image.');
+  if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type)) throw new Error('Choose a PNG, JPG or SVG image.');
   const url = URL.createObjectURL(file);
   let img: HTMLImageElement;
   try {
     img = await decode(url);
   } catch {
-    throw new Error('That image couldn’t be read.');
+    throw new Error('That image couldn’t be opened. Try a PNG or JPG.');
   } finally {
     URL.revokeObjectURL(url);
   }
-  const { data } = process(img, file.type === 'image/jpeg');
+  const { data } = process(img);
   if (data.length > MAX_BYTES) throw new Error('That image is too large. Try a simpler logo.');
   return data;
 }
@@ -101,7 +90,7 @@ export async function prepareLogo(file: File): Promise<string> {
 /** For logos saved before trimming existed: the trimmed version, or null if there was nothing to trim. */
 export async function retrimLogo(logo: string): Promise<string | null> {
   try {
-    const { data, trimmed } = process(await decode(logo), logo.startsWith('data:image/jpeg'));
+    const { data, trimmed } = process(await decode(logo));
     return trimmed ? data : null;
   } catch {
     return null;

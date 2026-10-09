@@ -7,7 +7,7 @@ import fontkit from '@pdf-lib/fontkit';
 import type { Invoice, Settings } from './types';
 import { dateLong, dateMedium, money } from './format';
 import { firstName, invoiceTotal, lineAmount, paidLine, printService } from './invoice';
-import { logoSize } from './logo';
+import { fitLogo, LOGO_PDF } from './logo';
 
 export interface FontBytes {
   regular: ArrayBuffer | Uint8Array;
@@ -157,15 +157,16 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
 
   const s = new Sheet(doc);
 
-  // Optional logo above the header, at the same size as on screen.
+  // Header: the logo (if any) above "Invoice" on the left, Number / Issued / Due on the right.
+  const headTop = s.y;
+  let headingTop = headTop;
   if (st.logo) {
     const logo = st.logo.startsWith('data:image/jpeg') ? await doc.embedJpg(st.logo) : await doc.embedPng(st.logo);
-    const { width, height } = logoSize(logo.width, logo.height);
-    s.page.drawImage(logo, { x: LEFT * PT, y: (H - s.y - height) * PT, width: width * PT, height: height * PT });
-    s.y += height + 28;
+    const { width, height } = fitLogo(logo.width, logo.height, LOGO_PDF);
+    s.page.drawImage(logo, { x: LEFT * PT, y: (H - headTop - height) * PT, width: width * PT, height: height * PT });
+    headingTop = headTop + height + 22;
   }
-
-  // Header: "Invoice" left, Number / Issued / Due right.
+  s.y = headingTop;
   const heading: TextStyle = { font: semibold, size: 52, lh: 52, spacing: -1.04 };
   s.text('Invoice', LEFT, s.y, heading);
   if (inv.paidAt) {
@@ -186,11 +187,11 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
   const valueX = RIGHT - valueW;
   const labelX = valueX - 18 - labelW;
   meta.forEach(([l, v], i) => {
-    const top = s.y + i * (21 + 3);
+    const top = headTop + i * (21 + 3);
     s.text(l, labelX, top, { ...metaStyle, color: C.muted });
     s.text(v, valueX, top, metaStyle);
   });
-  s.y += Math.max(52, meta.length * 21 + (meta.length - 1) * 3) + 52;
+  s.y = Math.max(headingTop + 52, headTop + meta.length * 21 + (meta.length - 1) * 3) + 52;
 
   // From / Bill to.
   const colW = (CONTENT - 32) / 2;

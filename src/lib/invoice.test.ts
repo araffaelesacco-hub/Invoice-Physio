@@ -127,12 +127,13 @@ describe('restoring', () => {
 });
 
 describe('logo', () => {
-  it('gives every shape of logo about the same weight', async () => {
-    const { logoSize } = await import('./logo');
-    expect(logoSize(240, 140)).toEqual({ width: 155, height: 90 }); // stacked badge
-    expect(logoSize(600, 160)).toEqual({ width: 229, height: 61 }); // wide wordmark
-    expect(logoSize(500, 500)).toEqual({ width: 96, height: 96 }); // square: capped height
-    expect(logoSize(1000, 100)).toEqual({ width: 260, height: 26 }); // very wide: capped width
+  it('fits the logo into its box without enlarging it', async () => {
+    const { fitLogo, LOGO_SCREEN, LOGO_PDF } = await import('./logo');
+    const badge = fitLogo(235, 186, LOGO_SCREEN); // stacked badge: height-bound
+    expect(badge.height).toBe(64);
+    expect(badge.width).toBeCloseTo(80.86, 2);
+    expect(fitLogo(600, 120, LOGO_SCREEN)).toEqual({ width: 220, height: 44 }); // wide wordmark: width-bound
+    expect(fitLogo(100, 40, LOGO_PDF)).toEqual({ width: 100, height: 40 }); // small: never enlarged
   });
   it('finds the artwork inside an empty margin', async () => {
     const { contentBounds } = await import('./logo');

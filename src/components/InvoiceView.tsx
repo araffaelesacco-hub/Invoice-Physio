@@ -99,9 +99,11 @@ export function InvoiceView(props: Props) {
       )}
 
       <div className="sheet">
-        {st.logo && <Logo className="sheet-logo" src={st.logo} alt={st.businessName || st.yourName || 'Logo'} />}
         <div className="sheet-head">
-          <div className="sheet-title">Invoice{paid && <span className="paid-label">Paid</span>}</div>
+          <div className="sheet-brand">
+            {st.logo && <Logo className="sheet-logo" src={st.logo} alt={`${st.businessName || st.yourName} logo`} />}
+            <div className="sheet-title">Invoice{paid && <span className="paid-label">Paid</span>}</div>
+          </div>
           <div className="sheet-meta">
             <span className="muted">Number</span>
             <input className="ed" value={inv.number} readOnly={locked} onChange={e => { const v = e.target.value; onUpdate(i => { i.number = v; }); }} aria-label="Invoice number" />
