@@ -84,7 +84,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
   min-height: 1000px; display: flex; flex-direction: column; box-sizing: border-box;
 }
 /* Optional logo, above the header; without one the sheet is exactly the design. */
-.sheet-logo { display: block; align-self: flex-start; height: 56px; width: auto; max-width: 240px; object-fit: contain; object-position: left center; margin-bottom: 28px; }
+.sheet-logo { display: block; align-self: flex-start; margin-bottom: 28px; }
 .sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
 .sheet-title { font-size: 48px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
 .sheet-meta { display: grid; grid-template-columns: auto 150px; gap: 4px 16px; font-size: 13px; align-items: baseline; }
@@ -168,10 +168,8 @@ select.ed { width: auto; min-width: 0; max-width: 100%; }
 .icon-accent { color: var(--color-accent); }
 
 .logo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
-.logo-preview {
-  height: 56px; width: auto; max-width: 240px; object-fit: contain; object-position: left center;
-  padding: 8px 10px; background: var(--color-neutral-100); border-radius: var(--radius-md);
-}
+.logo-preview { display: inline-block; padding: 10px 12px; background: var(--color-neutral-100); border-radius: var(--radius-md); }
+.logo-preview-img { display: block; }
 .logo-none { font-size: 14px; color: var(--color-neutral-700); }
 
 /* Empty */

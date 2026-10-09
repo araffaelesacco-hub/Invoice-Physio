@@ -7,7 +7,7 @@ import fontkit from '@pdf-lib/fontkit';
 import type { Invoice, Settings } from './types';
 import { dateLong, dateMedium, money } from './format';
 import { firstName, invoiceTotal, lineAmount, printService } from './invoice';
-import { fitLogo, LOGO_BOX } from './logo';
+import { logoSize } from './logo';
 
 export interface FontBytes {
   regular: ArrayBuffer | Uint8Array;
@@ -156,14 +156,12 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
 
   const s = new Sheet(doc);
 
-  // Optional logo above the header, fitted into 240 × 56 px.
+  // Optional logo above the header, at the same size as on screen.
   if (st.logo) {
     const logo = st.logo.startsWith('data:image/jpeg') ? await doc.embedJpg(st.logo) : await doc.embedPng(st.logo);
-    const { width, height } = fitLogo(logo.width, logo.height);
-    // Left-aligned and centred in the box, like object-fit: contain on screen.
-    const top = s.y + (LOGO_BOX.height - height) / 2;
-    s.page.drawImage(logo, { x: LEFT * PT, y: (H - top - height) * PT, width: width * PT, height: height * PT });
-    s.y += LOGO_BOX.height + 28;
+    const { width, height } = logoSize(logo.width, logo.height);
+    s.page.drawImage(logo, { x: LEFT * PT, y: (H - s.y - height) * PT, width: width * PT, height: height * PT });
+    s.y += height + 28;
   }
 
   // Header: "Invoice" left, Number / Issued / Due right.

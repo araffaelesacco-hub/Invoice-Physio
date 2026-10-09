@@ -2,7 +2,7 @@ import { CarSimple, FilePdf, PaperPlaneTilt, Plus, Trash, X } from '@phosphor-ic
 import type { Invoice, Line, Settings } from '../lib/types';
 import { dateLong, money } from '../lib/format';
 import { firstName, invoiceTotal, lineAmount, lineFromService, nextLine, rateNote } from '../lib/invoice';
-import { NumberInput } from './fields';
+import { Logo, NumberInput } from './fields';
 
 interface Props {
   inv: Invoice;
@@ -48,7 +48,7 @@ export function InvoiceView({ inv, st, today, clients, warnings, busy, onUpdate,
       )}
 
       <div className="sheet">
-        {st.logo && <img className="sheet-logo" src={st.logo} alt={st.businessName || st.yourName || 'Logo'} />}
+        {st.logo && <Logo className="sheet-logo" src={st.logo} alt={st.businessName || st.yourName || 'Logo'} />}
         <div className="sheet-head">
           <div className="sheet-title">Invoice</div>
           <div className="sheet-meta">

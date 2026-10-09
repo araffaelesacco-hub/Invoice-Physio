@@ -124,3 +124,23 @@ describe('restoring', () => {
     expect(withLogo(undefined)).toBe('');
   });
 });
+
+describe('logo', () => {
+  it('gives every shape of logo about the same weight', async () => {
+    const { logoSize } = await import('./logo');
+    expect(logoSize(240, 140)).toEqual({ width: 155, height: 90 }); // stacked badge
+    expect(logoSize(600, 160)).toEqual({ width: 229, height: 61 }); // wide wordmark
+    expect(logoSize(500, 500)).toEqual({ width: 96, height: 96 }); // square: capped height
+    expect(logoSize(1000, 100)).toEqual({ width: 260, height: 26 }); // very wide: capped width
+  });
+  it('finds the artwork inside an empty margin', async () => {
+    const { contentBounds } = await import('./logo');
+    const w = 10, h = 8, px = new Uint8ClampedArray(w * h * 4); // all transparent
+    for (let y = 2; y <= 5; y++) for (let x = 3; x <= 7; x++) px[(y * w + x) * 4 + 3] = 255;
+    expect(contentBounds(px, w, h)).toEqual({ x: 3, y: 2, width: 5, height: 4 });
+    // Opaque white background with one dark pixel
+    const solid = new Uint8ClampedArray(w * h * 4).fill(255);
+    solid.set([0, 0, 0, 255], (6 * w + 1) * 4);
+    expect(contentBounds(solid, w, h)).toEqual({ x: 1, y: 6, width: 1, height: 1 });
+  });
+});

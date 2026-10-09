@@ -34,7 +34,7 @@ npm run preview   # serve dist/ locally
 - **Privacy:** only the client's name and email are stored, and services are named without conditions or treatment notes. The app makes no network requests (fonts and icons are bundled), with no analytics and no cloud.
 - **PDF:** a vector A4 PDF with Source Serif 4 embedded, so the text is selectable. It is generated in the browser with pdf-lib and runs onto extra pages for long invoices. It's built in the background shortly after each edit, because Safari only allows `navigator.share` straight after a click.
 - **Send** opens the share sheet with the PDF attached and marks the invoice as sent. In browsers that can't share files, it downloads the PDF and opens a pre-filled email instead.
-- **Logo (optional):** add one in Settings → Your details as PNG, JPEG or SVG. It's scaled down, saved with your data (so it's included in backups) and printed above the "Invoice" heading on screen and in the PDF. Without a logo, the invoice is exactly the original design.
+- **Logo (optional):** add one in Settings → Your details as PNG, JPEG or SVG. Empty margins around the artwork are trimmed off, and the logo is sized by area so that a wide wordmark and a stacked badge get about the same visual weight (up to 260 × 96 px). It's saved with your data (so it's included in backups) and printed above the "Invoice" heading, aligned with it, on screen and in the PDF. Without a logo, the invoice is exactly the original design.
 - **Sample data:** the first run shows sample settings and invoices. Put your own details in Settings, then use **Clear sample invoices**.
 
 ## Code layout

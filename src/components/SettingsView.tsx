@@ -3,7 +3,7 @@ import { DownloadSimple, ImageSquare, Plus, UploadSimple, X } from '@phosphor-ic
 import type { Pricing, Settings } from '../lib/types';
 import { uid } from '../lib/format';
 import { prepareLogo } from '../lib/logo';
-import { NumberInput } from './fields';
+import { Logo, NumberInput } from './fields';
 
 type TextKey = 'yourName' | 'businessName' | 'abn' | 'phone' | 'email' | 'accountName' | 'bsb' | 'accountNumber' | 'payId';
 
@@ -71,7 +71,7 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
         <div className="field">
           <label>Logo</label>
           <div className="logo-row">
-            {st.logo ? <img className="logo-preview" src={st.logo} alt="Your logo" /> : <span className="logo-none">No logo. Invoices start with the heading.</span>}
+            {st.logo ? <span className="logo-preview"><Logo className="logo-preview-img" src={st.logo} alt="Your logo" /></span> : <span className="logo-none">No logo. Invoices start with the heading.</span>}
             <button className="btn btn-secondary" onClick={() => logoRef.current?.click()}>
               <ImageSquare size={17} className="icon-accent" />{st.logo ? 'Change logo' : 'Add logo'}
             </button>

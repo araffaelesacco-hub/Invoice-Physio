@@ -4,6 +4,7 @@ import type { Data, Invoice, Settings } from './lib/types';
 import { todayISO } from './lib/format';
 import { clientDirectory, createInvoice, fileName, message, normalizeData, sortDesc, warningsFor } from './lib/invoice';
 import { downloadBlob, load, save } from './lib/storage';
+import { retrimLogo } from './lib/logo';
 import { Sidebar } from './components/Sidebar';
 import { InvoiceView } from './components/InvoiceView';
 import { SettingsView } from './components/SettingsView';
@@ -79,6 +80,18 @@ export default function App() {
     if (!cur || !key || pdfCache.current?.key === key) return;
     pdfTimer.current = window.setTimeout(() => getPdf(cur, st).catch(() => {}), 1200);
   }, [cur, st, getPdf]);
+
+  // Logos saved before trimming existed (or restored from an older backup)
+  // get their empty margins trimmed; an already trimmed logo is left as is.
+  const logo = data.settings.logo;
+  useEffect(() => {
+    if (!logo) return;
+    let live = true;
+    retrimLogo(logo).then(trimmed => {
+      if (live && trimmed) setData(d => { if (d.settings.logo === logo) d.settings.logo = trimmed; });
+    });
+    return () => { live = false; };
+  }, [logo, setData]);
 
   useEffect(() => () => {
     window.clearTimeout(pdfTimer.current);
