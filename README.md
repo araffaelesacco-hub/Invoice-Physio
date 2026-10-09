@@ -29,7 +29,7 @@ npm run preview   # serve dist/ locally
 
 ## What it does
 
-- **Invoices** are numbered `{YYYY}-{NNN}` and issued today by default. Each session has a date, service, duration and amount. Home-visit travel is optional: new sessions start without it, and the car icon on a session adds or removes the travel fee for that visit. Settings has an option to add it to every new session instead. Prices are copied into each session, so changing a price in Settings doesn't alter old invoices.
+- **Invoices** are numbered `{YYYY}-{NNN}` and issued today by default. Each session has a date, service, duration and amount. Home-visit travel is never added automatically: each session shows a quiet "+ Add home visit travel ($25.00)" suggestion, and one click adds it to that visit. The car icon adds or removes it too. Prices are copied into each session, so changing a price in Settings doesn't alter old invoices.
 - **Australian rules:** the heading is "Invoice" (not "Tax invoice"). Every invoice carries your name or business name, ABN, issue date, number, each service and the total, plus "No GST has been charged." Send stays disabled until the invoice has a name or business name, an ABN, a client name and at least one session.
 - **Privacy:** only the client's name and email are stored, and services are named without conditions or treatment notes. The app makes no network requests (fonts and icons are bundled), with no analytics and no cloud.
 - **PDF:** a vector A4 PDF with Source Serif 4 embedded, so the text is selectable. It is generated in the browser with pdf-lib and runs onto extra pages for long invoices. It's built in the background shortly after each edit, because Safari only allows `navigator.share` straight after a click.

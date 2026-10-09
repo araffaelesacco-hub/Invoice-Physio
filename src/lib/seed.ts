@@ -45,7 +45,6 @@ export function seed(): Data {
       payId: 'sam@harperphysio.com.au',
       logo: '',
       travelFee: 25,
-      travelByDefault: false,
       services,
     },
     invoices: [

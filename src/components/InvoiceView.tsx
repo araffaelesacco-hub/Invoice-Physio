@@ -197,8 +197,18 @@ export function InvoiceView(props: Props) {
                   </button>
                 </span>
               </div>
-              {l.travel && (
+              {l.travel ? (
                 <div className="sessions-grid travel-row"><span /><span>Home visit travel</span><span /><span className="right">{money(l.travelFee)}</span></div>
+              ) : (
+                // Suggested, never added on its own: one click adds it to this visit.
+                !locked && (
+                  <div className="sessions-grid travel-suggest">
+                    <span />
+                    <button className="btn btn-ghost" onClick={() => updLine(idx, { travel: true, travelFee: Number(st.travelFee) || 0 })}>
+                      <Plus size={13} />Add home visit travel ({money(Number(st.travelFee) || 0)})
+                    </button>
+                  </div>
+                )
               )}
             </div>
           ))}
@@ -239,7 +249,7 @@ export function InvoiceView(props: Props) {
         <div className="thanks">{first ? `Thank you, ${first}.` : 'Thank you.'}</div>
       </div>
 
-      <div className="hint" hidden={locked}>Anything with a dashed underline can be edited. The car icon adds or removes the travel fee for that visit. Changes save automatically.</div>
+      <div className="hint" hidden={locked}>Anything with a dashed underline can be edited. Home visit travel is only added to the sessions you choose; the car icon removes it again. Changes save automatically.</div>
     </div>
   );
 }

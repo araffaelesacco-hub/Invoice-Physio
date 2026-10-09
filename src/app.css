@@ -137,6 +137,13 @@ select.ed { width: auto; min-width: 0; max-width: 100%; }
 .travel-off { color: var(--color-neutral-400); }
 .remove { color: var(--color-neutral-600); }
 .travel-row { padding-top: 6px; color: var(--color-neutral-700); }
+/* The travel suggestion: quiet until pointed at, so a list of sessions doesn't shout. */
+.travel-suggest { padding-top: 2px; }
+.travel-suggest .btn {
+  justify-self: start; grid-column: 2 / span 3; padding: 1px 4px 1px 0; gap: 4px;
+  font-family: var(--font-body); font-weight: 400; font-size: 12px; color: var(--color-neutral-600);
+}
+.travel-suggest .btn:hover, .travel-suggest .btn:focus-visible { color: var(--color-accent-700); background: transparent; }
 .add-session { margin-top: 6px; padding-left: 0; }
 
 .total {
@@ -236,8 +243,3 @@ dialog.confirm p { margin: 0 0 8px; }
 .btn-danger { background: var(--color-accent-2-700); color: var(--color-bg); }
 .btn-danger:hover:not(:disabled) { background: var(--color-accent-2-800); }
 .btn-danger:active:not(:disabled) { background: var(--color-accent-2-900); }
-
-/* Checkbox setting */
-.check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; max-width: 620px; }
-.check input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--color-accent); flex: none; }
-.check-note { display: block; font-size: 13px; color: var(--color-neutral-700); }

@@ -121,13 +121,6 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
           <label htmlFor="set-travel">Home visit travel fee ($)</label>
           <NumberInput id="set-travel" className="input" min={0} value={st.travelFee} onCommit={n => onUpdate(s => { s.travelFee = n; })} />
         </div>
-        <label className="check">
-          <input type="checkbox" checked={st.travelByDefault} onChange={e => { const v = e.target.checked; onUpdate(s => { s.travelByDefault = v; }); }} />
-          <span>
-            Add the travel fee to every new session
-            <span className="check-note">When this is off, add travel only to the visits that need it with the car icon on each session.</span>
-          </span>
-        </label>
       </section>
 
       <section className="settings-section data">

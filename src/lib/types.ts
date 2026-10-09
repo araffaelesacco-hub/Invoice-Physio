@@ -25,8 +25,6 @@ export interface Settings {
   /** Optional logo as a PNG or JPEG data URL, already scaled down. '' when none. */
   logo: string;
   travelFee: number;
-  /** Whether new sessions start with the travel fee. Off: add it per session with the car icon. */
-  travelByDefault: boolean;
   services: Service[];
 }
 
