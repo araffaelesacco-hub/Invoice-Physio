@@ -38,22 +38,23 @@ export function lineFromService(sv: Omit<Service, 'id'>): Pick<Line, 'serviceNam
   return { serviceName: sv.name, pricing: sv.pricing, price: sv.price, duration: sv.duration };
 }
 
-/** A new session: the first service, travel on at the current travel fee. */
+/** A new session: the first service; travel only if Settings says to add it by default. */
 export function newLine(st: Settings, date: string): Line {
   return {
     id: uid(),
     date,
     ...lineFromService(st.services[0] || FALLBACK_SERVICE),
-    travel: true,
+    travel: !!st.travelByDefault,
     travelFee: Number(st.travelFee) || 0,
   };
 }
 
-/** "Add session" copies the previous row's service, duration and travel, dated today. */
+/** "Add session" copies the previous row's service and duration, dated today. Travel follows
+ *  Settings rather than the row above, so it only appears where it's added. */
 export function nextLine(st: Settings, inv: Invoice, today: string): Line {
   const l = newLine(st, today);
   const last = inv.lines[inv.lines.length - 1];
-  if (last) Object.assign(l, { serviceName: last.serviceName, pricing: last.pricing, price: last.price, duration: last.duration, travel: last.travel });
+  if (last) Object.assign(l, { serviceName: last.serviceName, pricing: last.pricing, price: last.price, duration: last.duration });
   return l;
 }
 
@@ -154,6 +155,7 @@ export function normalizeData(x: unknown): Data | null {
     payId: str(s.payId),
     logo: /^data:image\/(png|jpeg);base64,/.test(str(s.logo)) ? str(s.logo) : '',
     travelFee: num(s.travelFee),
+    travelByDefault: s.travelByDefault === true,
     services: (Array.isArray(s.services) ? s.services : []).map(sv => ({
       id: str(sv?.id) || uid(),
       name: str(sv?.name),

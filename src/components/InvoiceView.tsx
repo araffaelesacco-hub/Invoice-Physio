@@ -186,7 +186,7 @@ export function InvoiceView(props: Props) {
                   <button
                     className={`btn btn-ghost ${l.travel ? 'travel-on' : 'travel-off'}`}
                     onClick={() => updLine(idx, { travel: !l.travel, travelFee: Number(st.travelFee) || 0 })}
-                    title={l.travel ? 'Remove travel fee' : 'Add travel fee'}
+                    title={l.travel ? 'Remove home visit travel' : `Add home visit travel (${money(Number(st.travelFee) || 0)})`}
                     aria-label={l.travel ? 'Remove travel fee' : 'Add travel fee'}
                     aria-pressed={l.travel}
                   >

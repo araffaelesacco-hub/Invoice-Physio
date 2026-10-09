@@ -31,19 +31,25 @@ describe('numbering', () => {
     expect(nextNumber([inv('2026-009'), inv('2026-014'), inv('2025-120')], '2026')).toBe('2026-015');
     expect(nextNumber([inv('2025-120'), inv('custom')], '2026')).toBe('2026-001');
   });
-  it('starts a new invoice dated today with one session and travel on', () => {
+  it('starts a new invoice dated today with one session and no travel', () => {
     const d = seed();
     const n = createInvoice(d, '2026-10-07');
     expect(n.number).toBe('2026-015');
     expect(n.issued).toBe('2026-10-07');
     expect(n.lines).toHaveLength(1);
-    expect(n.lines[0]).toMatchObject({ serviceName: 'Initial assessment', price: 140, travel: true, travelFee: 25, date: '2026-10-07' });
+    expect(n.lines[0]).toMatchObject({ serviceName: 'Initial assessment', price: 140, travel: false, travelFee: 25, date: '2026-10-07' });
+  });
+  it('adds travel to new sessions only when Settings says so', () => {
+    const d = seed();
+    d.settings.travelByDefault = true;
+    expect(createInvoice(d, '2026-10-07').lines[0].travel).toBe(true);
   });
   it('copies the previous session when adding one', () => {
     const d = seed();
     const priya = d.invoices.find(i => i.number === '2026-010')!;
-    priya.lines[1].travel = false;
+    // The row above has travel, but a new row only gets it if Settings says so.
     const l = nextLine(d.settings, priya, '2026-10-07');
+    expect(priya.lines[1].travel).toBe(true);
     expect(l).toMatchObject({ serviceName: 'Exercise program', pricing: 'hourly', duration: 60, travel: false, date: '2026-10-07' });
   });
 });
@@ -113,6 +119,7 @@ describe('restoring', () => {
     const d = normalizeData({ settings: { yourName: 'Sam' }, invoices: [{ number: '2026-001', issued: '2026-10-01', lines: [{ price: '110' }] }] })!;
     expect(d.settings.abn).toBe('');
     expect(d.settings.services).toEqual([]);
+    expect(d.settings.travelByDefault).toBe(false);
     expect(d.invoices[0].client).toEqual({ name: '', email: '' });
     expect(d.invoices[0].lines[0]).toMatchObject({ price: 110, pricing: 'fixed', travel: false });
   });
