@@ -4,7 +4,12 @@ Invoicing for a sole-trader physiotherapist in Australia (home visits, not regis
 
 There is no server. Everything is stored in the browser's `localStorage` on your Mac. Use **Backup** to download a JSON copy now and then, and **Settings → Restore from backup** to bring one back.
 
-## Using it without installing anything
+## Using it
+
+The app is published at **https://araffaelesacco-hub.github.io/Invoice-Physio/**. Open it in Safari and bookmark it, or use File → Add to Dock. Every change merged into `main` is tested, built and published by `.github/workflows/pages.yml`, so reloading the page picks it up. Your invoices are stored only in Safari on your Mac, for that address; the website serves only the app.
+
+## Using it without a web address
+
 
 A ready-built copy is in [`release/Invoice-Book.html`](release/Invoice-Book.html). Open that link on GitHub, click **Download raw file**, then double-click the downloaded file. To rebuild it after changing the code, run `npm run build:single` and copy the result over it.
 
