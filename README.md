@@ -6,6 +6,9 @@ There is no server. Everything is stored in the browser's `localStorage` on your
 
 ## Using it without installing anything
 
+A ready-built copy is in [`release/Invoice-Book.html`](release/Invoice-Book.html). Open that link on GitHub, click **Download raw file**, then double-click the downloaded file. To rebuild it after changing the code, run `npm run build:single` and copy the result over it.
+
+
 `npm run build:single` makes one self-contained file, `dist-single/Invoice Book.html`. Put it somewhere permanent, such as Documents, and double-click it to open it in Safari. It needs no server or internet connection.
 
 Safari keeps the invoices for that file at that location. If you move or rename the file, it opens empty, so take a **Backup** first and **Restore** it afterwards.
