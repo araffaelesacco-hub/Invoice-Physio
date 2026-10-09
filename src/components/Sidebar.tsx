@@ -1,4 +1,4 @@
-import { CaretLeft, CaretRight, FloppyDisk, GearSix, PenNib } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, GearSix, PenNib, Trash } from '@phosphor-icons/react';
 import type { Data } from '../lib/types';
 import { dateMasthead, dateShort, money, money0, monthName, monthYear, plural, shiftMonth } from '../lib/format';
 import { invoiceTotal, sortDesc } from '../lib/invoice';
@@ -16,9 +16,10 @@ interface Props {
   onClearSamples: () => void;
   onSettings: () => void;
   onBackup: () => void;
+  onDelete: (id: string) => void;
 }
 
-export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth, onOpen, onNew, onClearSamples, onSettings, onBackup }: Props) {
+export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth, onOpen, onNew, onClearSamples, onSettings, onBackup, onDelete }: Props) {
   const st = data.settings;
   const inMonth = data.invoices.filter(i => i.issued.slice(0, 7) === month).sort(sortDesc);
   const total = inMonth.reduce((a, i) => a + invoiceTotal(i), 0);
@@ -64,7 +65,8 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
 
       <div className="inv-list">
         {inMonth.map(i => (
-          <button key={i.id} className={`inv-row${showingInvoice && i.id === currentId ? ' is-current' : ''}`} onClick={() => onOpen(i.id)}>
+          <div key={i.id} className={`inv-row${showingInvoice && i.id === currentId ? ' is-current' : ''}`}>
+            <button className="inv-row-open" onClick={() => onOpen(i.id)}>
             <span className="inv-row-text">
               <span className={`inv-row-kicker${i.paidAt ? ' is-paid' : i.sentAt ? '' : ' is-unsent'}`}>
                 {i.number} · {i.paidAt ? `Paid ${dateShort(i.paidAt)}` : i.sentAt ? `${dateShort(i.issued)} · Unpaid` : 'Not sent'}
@@ -72,7 +74,11 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
               <span className="inv-row-client">{i.client.name.trim() || 'New client'}</span>
             </span>
             <span className="inv-row-amount">{money(invoiceTotal(i))}</span>
-          </button>
+            </button>
+            <button className="btn btn-ghost inv-row-delete" onClick={() => onDelete(i.id)} title="Delete invoice" aria-label={`Delete invoice ${i.number}`}>
+              <Trash size={16} />
+            </button>
+          </div>
         ))}
       </div>
 

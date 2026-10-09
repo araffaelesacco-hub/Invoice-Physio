@@ -8,6 +8,7 @@ import { retrimLogo } from './lib/logo';
 import { Sidebar } from './components/Sidebar';
 import { InvoiceView } from './components/InvoiceView';
 import { SettingsView } from './components/SettingsView';
+import { DeleteDialog } from './components/DeleteDialog';
 
 type View = 'invoice' | 'settings' | 'empty';
 
@@ -27,6 +28,7 @@ export default function App() {
   const saveFailed = useRef(false);
   // Sent or paid invoices unlocked for editing in this session.
   const [unlocked, setUnlocked] = useState<Set<string>>(() => new Set());
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const today = todayISO();
   const st = data.settings;
@@ -190,24 +192,19 @@ export default function App() {
     }
   };
 
-  const deleteInvoice = () => {
-    if (!cur) return;
-    if (isIssued(cur) && !cur.sample) {
-      // A sent or paid invoice is a record to keep, so deleting one takes typing its number.
-      const typed = window.prompt(
-        `Invoice ${cur.number} has been ${cur.paidAt ? 'paid' : 'sent'}. The ATO expects you to keep invoices for five years, so it's usually best to keep it.\n\nTo delete it anyway, type ${cur.number}:`,
-      );
-      if (typed === null) return;
-      if (typed.trim() !== cur.number) {
-        showToast(`Not deleted: that didn\u2019t match ${cur.number}.`);
-        return;
-      }
-    } else if (!window.confirm(`Delete invoice ${cur.number}? This can't be undone.`)) return;
-    const rest = data.invoices.filter(i => i.id !== cur.id).sort(sortDesc);
-    const next = rest.find(i => i.issued.slice(0, 7) === month) || rest[0];
-    setData(d => { d.invoices = d.invoices.filter(i => i.id !== cur.id); });
-    setCurrentId(next ? next.id : null);
-    setView(next ? 'invoice' : 'empty');
+  // Deleting always goes through the confirmation dialog; this runs once it's confirmed.
+  const deleteInvoice = (id: string) => {
+    const gone = data.invoices.find(i => i.id === id);
+    if (!gone) return;
+    setDeletingId(null);
+    setData(d => { d.invoices = d.invoices.filter(i => i.id !== id); });
+    if (id === currentId) {
+      const rest = data.invoices.filter(i => i.id !== id).sort(sortDesc);
+      const next = rest.find(i => i.issued.slice(0, 7) === month) || rest[0];
+      setCurrentId(next ? next.id : null);
+      if (view === 'invoice') setView(next ? 'invoice' : 'empty');
+    }
+    showToast(`Invoice ${gone.number} deleted.`);
   };
 
   const clearSamples = () => {
@@ -240,6 +237,7 @@ export default function App() {
   };
 
   const showInvoice = view === 'invoice' && !!cur;
+  const deleting = data.invoices.find(i => i.id === deletingId);
 
   return (
     <IconContext.Provider value={{ weight: 'duotone' }}>
@@ -256,6 +254,7 @@ export default function App() {
           onClearSamples={clearSamples}
           onSettings={() => setView('settings')}
           onBackup={backup}
+          onDelete={setDeletingId}
         />
 
         <main className="main">
@@ -278,7 +277,7 @@ export default function App() {
               }}
               onShare={share}
               onDownload={download}
-              onDelete={deleteInvoice}
+              onDelete={() => setDeletingId(cur.id)}
               onSettings={() => setView('settings')}
             />
           )}
@@ -304,6 +303,8 @@ export default function App() {
         </main>
 
         {toast && <div className="toast" role="status">{toast}</div>}
+
+        {deleting && <DeleteDialog key={deleting.id} inv={deleting} onConfirm={() => deleteInvoice(deleting.id)} onCancel={() => setDeletingId(null)} />}
       </div>
     </IconContext.Provider>
   );
