@@ -1,5 +1,5 @@
 import { useRef, type ChangeEvent } from 'react';
-import { DownloadSimple, ImageSquare, Plus, UploadSimple, X } from '@phosphor-icons/react';
+import { DownloadSimple, Image as ImageIcon, Plus, UploadSimple, X } from '@phosphor-icons/react';
 import type { Pricing, Settings } from '../lib/types';
 import { uid } from '../lib/format';
 import { prepareLogo } from '../lib/logo';
@@ -68,16 +68,22 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
           {field('phone', 'Phone', { type: 'tel' })}
           {field('email', 'Email', { type: 'email' })}
         </div>
-        <div className="field">
-          <label>Logo</label>
-          <div className="logo-row">
-            {st.logo ? <span className="logo-preview"><Logo className="logo-preview-img" src={st.logo} alt="Your logo" /></span> : <span className="logo-none">No logo. Invoices start with the heading.</span>}
-            <button className="btn btn-secondary" onClick={() => logoRef.current?.click()}>
-              <ImageSquare size={17} className="icon-accent" />{st.logo ? 'Change logo' : 'Add logo'}
-            </button>
-            {st.logo && <button className="btn btn-ghost" onClick={() => onUpdate(s => { s.logo = ''; })} aria-label="Remove logo">Remove</button>}
-            <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp" onChange={onLogo} hidden />
+      </section>
+
+      <section className="settings-section logo-section">
+        <h4>Logo</h4>
+        <p className="settings-note">Shown at the top of every invoice. PNG with a transparent background works best.</p>
+        {st.logo && (
+          <div className="logo-tile">
+            <Logo className="sheet-logo" src={st.logo} alt={`${st.businessName || st.yourName} logo`} />
           </div>
+        )}
+        <div className="data-actions">
+          <button className="btn btn-secondary" onClick={() => logoRef.current?.click()}>
+            <ImageIcon size={17} className="icon-accent" />{st.logo ? 'Replace logo' : 'Upload logo'}
+          </button>
+          {st.logo && <button className="btn btn-ghost logo-remove" onClick={() => onUpdate(s => { s.logo = ''; })}>Remove logo</button>}
+          <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={onLogo} hidden />
         </div>
       </section>
 

@@ -23,9 +23,9 @@ A two-column CSS grid: `grid-template-columns: minmax(260px,340px) minmax(0,1fr)
 ### Sidebar (left)
 `position: sticky; top: 0; height: 100vh; overflow: auto; padding: 28px 28px 24px`, flex column, top to bottom:
 1. **Masthead rules:** a 3px solid `--color-text` rule, a 2px gap, a 1px rule. Then a rail (`padding: 6px 0`, 11px uppercase, letter-spacing .06em) with the business name on the left and today's date ("Wed 7 Oct 2026") on the right. Then another 1px rule.
-2. **Month nav** (margin-top 28px): an italic 16px label, "October so far" for the current month or "September 2026" for a past month. On the right, two ghost icon buttons (Phosphor duotone `caret-left` and `caret-right`, 18px).
-3. **Month total:** the DS `.cmyk-num` plate numeral at 84px, weight 600, letter-spacing -.03em, whole dollars ("$1,245"). Markup: `.cmyk-num > span.paper + span.plate.plate-c/.plate-m/.plate-y`, each holding the same text.
-4. **Summary** (16px, line-height 1.45, margin-top 18px): "4 invoices, 11 sessions. September closed at $6,480." The second sentence appears only when the previous month's total is above 0. With no invoices: "No invoices in {Month}."
+2. **Month nav** (margin-top 28px): an italic 16px label with month and year ("October 2026"). On the right, two ghost icon buttons (Phosphor duotone `caret-left` and `caret-right`, 18px).
+3. **Month total as a sentence** (no big number): 28px, line-height 1.3, letter-spacing -.01em, margin-top 14px. Current month: "You’ve invoiced **$1,245** so far in October." Past month: "You invoiced **$6,480** in September." The amount is whole dollars, weight 600, colour `--color-accent-700`.
+4. **Summary** (16px, line-height 1.45, margin-top 16px, `--color-neutral-700`): "4 invoices, 11 sessions. September closed at $6,480." The second sentence appears only when the previous month's total is above 0. With no invoices the first sentence is omitted.
 5. **Sample banner** (only while sample invoices exist): background `--color-accent-2-100`, text `--color-accent-2-800`, padding 12px 14px, radius 2px, 13px. Copy: "These are sample invoices. Put your own details in Settings, then clear the samples." Below it, a ghost button "Clear sample invoices".
 6. **New invoice:** `.btn.btn-primary`, height 46px, 15px, Phosphor `pen-nib` icon, margin-top 24px.
 7. **Invoice list** for the selected month, newest first. Each row is a full-width button with padding 10px 12px and radius 2px. Background is `--color-surface` when selected, `--color-neutral-200` on hover. Contents:
@@ -39,7 +39,7 @@ A two-column CSS grid: `grid-template-columns: minmax(260px,340px) minmax(0,1fr)
 - **Toolbar:** "Invoice {number}" (22px, 600). Under it, the status at 13px: "Not sent yet" in accent-2-700, or "Sent 7 October 2026" in neutral-700. On the right: a delete icon button (`trash`, ghost, with a confirm dialog), "Download PDF" (`.btn-secondary`, `file-pdf` icon), and "Send" (`.btn-primary`, `paper-plane-tilt`, min-width 120px). Send shows "Preparing…" while busy and is disabled while there are warnings.
 - **Warnings box** (only when there are warnings): accent-2-100 background, accent-2-800 text, 14px. Bold heading "Before you can send this invoice:", then one line per problem.
 - **Editable paper:** background `--color-neutral-100`, `--shadow-md`, padding `clamp(32px,5vw,64px) clamp(24px,4vw,64px) 56px`, min-height 1000px, flex column.
-  - Header: "Invoice" on the left (48px, 600, letter-spacing -.02em). On the right, a 13px grid of label/value pairs: Number (editable text), Issued (editable date), Due ("On receipt", fixed).
+  - Header: on the left, the logo if one is set (`max-height:64px; max-width:220px; object-fit:contain`, left-aligned, 20px above the heading), then "Invoice" (48px, 600, letter-spacing -.02em). On the right, a 13px grid of label/value pairs: Number (editable text), Issued (editable date), Due ("On receipt", fixed).
   - From / Bill to: a 2-column grid (`minmax(0,1fr)` × 2, gap 32px, margin-top 48px, `overflow-wrap:anywhere`).
     - From shows name (15px/600), business name, "ABN …" and "phone · email", read from Settings. Below it, a ghost link "Change in Settings".
     - Bill to has an editable client name (15px/600, with a datalist of past client names; picking a known name fills the email if it's empty) and an editable email.
@@ -60,6 +60,7 @@ A two-column CSS grid: `grid-template-columns: minmax(260px,340px) minmax(0,1fr)
 ### Main: Settings view
 Max-width 760px, sections 44px apart. Title "Settings" (h2) with a "Done" `.btn-secondary` on the right. Fields use DS `.field > label + .input` in an auto-fit grid (`minmax(220px,1fr)`, gap 16px).
 - **Your details:** Your name, Business name, ABN, Phone, Email. Helper text: "Your name or business name and your ABN must appear on every invoice."
+- **Logo:** helper text "Shown at the top of every invoice. PNG with a transparent background works best." A preview on a neutral-100 tile with shadow-sm. Buttons: "Upload logo" / "Replace logo" (`.btn-secondary`, Phosphor `image`) and a ghost "Remove logo". On upload, the image is scaled down to fit 600×300 and stored as a PNG data URL in `settings.logo`.
 - **How clients pay you:** Account name, BSB, Account number, PayID.
 - **Services and prices:** rows in a grid (`minmax(0,1fr) 130px 110px 100px 36px`) with name, pricing (`select`: Fixed price / Hourly rate), price (shows "/ hour" when hourly), usual length (min) and a remove button. Then "+ Add service" and a "Home visit travel fee ($)" field.
 - **Your data:** "Everything is saved in this browser on this Mac and nowhere else. Clearing your browser's website data deletes it, so download a backup now and then and keep it somewhere safe." Buttons: "Download backup" and "Restore from backup" (a hidden JSON file input, with a confirm before overwriting).
@@ -73,6 +74,7 @@ Fixed at bottom centre, max-width 520px, background `--color-neutral-900`, text 
 ## PDF output (what the client receives)
 - An A4 sheet, 794px wide at 96dpi (min-height 1123px), padding 68px 68px 56px, **white background**.
 - Same structure as the editable paper, without inputs or controls:
+  - Logo (if set) above the heading: max-height 72px, max-width 240px, 22px gap.
   - Heading at 52px.
   - Body text at 14px.
   - Session columns `110px 1fr 80px 96px`.
@@ -109,7 +111,7 @@ Fixed at bottom centre, max-width 520px, background `--color-neutral-900`, text 
 ## State
 ```
 data = {
-  settings: { yourName, businessName, abn, phone, email, accountName, bsb, accountNumber, payId,
+  settings: { logo: dataURL|'', yourName, businessName, abn, phone, email, accountName, bsb, accountNumber, payId,
               travelFee: number,
               services: [{ id, name, pricing: 'fixed'|'hourly', price: number, duration: number }] },
   invoices: [{ id, number: '2026-015', issued: 'YYYY-MM-DD', client: { name, email },
@@ -126,7 +128,6 @@ Dates are handled as local `YYYY-MM-DD` strings; parse them with `new Date(y, m-
   - accent #0088b0, with 100 #e9f8ff, 400 #62c5ee, 600 #1186ac (hover), 700 #006786 (pressed and small accent text).
   - accent-2 #d6006c, with 100 #fff1f4, 700 #aa0b56, 800 #790e3d.
   - neutral 100 #f8f4f4, 200 #eae7e7, 300 #d7d3d3, 400 #bab6b6, 600 #7d7979, 700 #605d5d, 900 #2d2b2b.
-  - process yellow #edbb00 (plate numeral only).
 - **Type:** Source Serif 4 (400, 600, italic 400) for everything. No sans-serif. Base 15px/1.55. h2 32px, h4 20px. Headings weight 600, letter-spacing -.015em.
 - **Spacing:** 5, 10, 15, 20, 30, 40px.
 - **Radius:** 1, 2, 4px.
@@ -134,7 +135,7 @@ Dates are handled as local `YYYY-MM-DD` strings; parse them with `new Date(y, m-
   - sm: `0 1px 2px rgba(45,43,43,.14)`
   - md: `0 3px 10px rgba(45,43,43,.16)`
   - lg: `0 12px 32px rgba(45,43,43,.22)`
-- **Components used:** `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-icon`, `.field`, `.input`, `.cmyk-num`. Hover and focus states come from the DS.
+- **Components used:** `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-icon`, `.field`, `.input`. Hover and focus states come from the DS.
 - **Structure:** no boxes or dividers for layout; whitespace separates sections. Rules appear only as masthead furniture and in the table.
 
 ## Assets

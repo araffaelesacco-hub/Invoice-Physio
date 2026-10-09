@@ -2,7 +2,6 @@ import { CaretLeft, CaretRight, FloppyDisk, GearSix, PenNib, Trash } from '@phos
 import type { Data } from '../lib/types';
 import { dateMasthead, dateShort, money, money0, monthName, monthYear, plural, shiftMonth } from '../lib/format';
 import { invoiceTotal, sortDesc } from '../lib/invoice';
-import { PlateNumeral } from './fields';
 
 interface Props {
   data: Data;
@@ -26,14 +25,14 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
   const sessions = inMonth.reduce((a, i) => a + i.lines.length, 0);
   const prev = shiftMonth(month, -1);
   const prevTotal = data.invoices.filter(i => i.issued.slice(0, 7) === prev).reduce((a, i) => a + invoiceTotal(i), 0);
-  const summary = inMonth.length
-    ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.`
-    : `No invoices in ${monthName(month)}.`;
-  const prevLine = prevTotal > 0 ? ` ${monthName(prev)} closed at ${money0(prevTotal)}.` : '';
+  const isNow = month === today.slice(0, 7);
+  const summary = inMonth.length ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.` : '';
   // The big figure stays what was invoiced; this says how much of it has come in.
   const received = inMonth.filter(i => i.paidAt).reduce((a, i) => a + invoiceTotal(i), 0);
   const owing = total - received;
-  const paidLine = !inMonth.length ? '' : owing > 0.004 ? ` ${money0(received)} received, ${money0(owing)} still to come.` : ' All paid.';
+  const paidLine = !inMonth.length ? '' : owing > 0.004 ? `${money0(received)} received, ${money0(owing)} still to come.` : 'All paid.';
+  const prevSentence = prevTotal > 0 ? `${monthName(prev)} closed at ${money0(prevTotal)}.` : '';
+  const details = [summary, paidLine, prevSentence].filter(Boolean).join(' ');
 
   return (
     <aside className="side">
@@ -45,14 +44,16 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
       <div className="masthead-thin" />
 
       <div className="month-nav">
-        <span className="month-label">{month === today.slice(0, 7) ? `${monthName(month)} so far` : monthYear(month)}</span>
+        <span className="month-label">{monthYear(month)}</span>
         <div className="arrows">
           <button className="btn btn-ghost" onClick={() => onMonth(shiftMonth(month, -1))} aria-label="Previous month"><CaretLeft size={18} /></button>
           <button className="btn btn-ghost" onClick={() => onMonth(shiftMonth(month, 1))} aria-label="Next month"><CaretRight size={18} /></button>
         </div>
       </div>
-      <PlateNumeral className="month-total">{money0(total)}</PlateNumeral>
-      <p className="month-summary">{summary}{paidLine}{prevLine}</p>
+      <p className="month-sentence">
+        {isNow ? 'You\u2019ve invoiced' : 'You invoiced'} <span className="month-amount">{money0(total)}</span> {isNow ? `so far in ${monthName(month)}.` : `in ${monthName(month)}.`}
+      </p>
+      {details && <p className="month-summary">{details}</p>}
 
       {data.invoices.some(i => i.sample) && (
         <div className="sample-note">

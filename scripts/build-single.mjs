@@ -25,7 +25,6 @@ let html = read('index.html');
 
 html = html.replace(/<link rel="stylesheet"[^>]*href="\.?\/?([^"]+)"[^>]*>/g, (_, href) => `<style>\n${read(href)}\n</style>`);
 html = html.replace(/<script type="module"[^>]*src="\.?\/?([^"]+)"[^>]*><\/script>/g, (_, src) => `<script type="module">\n${safe(read(src))}\n</script>`);
-html = html.replace(/<script src="\.\/ds\/_ds_bundle\.js" defer><\/script>/, () => `<script>\n${safe(read('ds/_ds_bundle.js'))}\n</script>`);
 html = html.replace(/<link rel="modulepreload"[^>]*>\n?/g, '');
 
 const leftovers = html.match(/(src|href)="\.?\/?(assets|ds)\/[^"]+"/g);

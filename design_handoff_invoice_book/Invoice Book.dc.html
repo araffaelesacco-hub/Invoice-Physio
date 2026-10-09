@@ -30,8 +30,8 @@
         <button class="btn btn-ghost" onClick="{{ nextMonth }}" aria-label="Next month"><i class="ph-duotone ph-caret-right" style="font-size:18px"></i></button>
       </div>
     </div>
-    <div class="cmyk-num" style="font-size:84px;font-weight:600;letter-spacing:-.03em;margin-top:14px"><span class="paper">{{ monthTotal }}</span><span class="plate plate-c" aria-hidden="true">{{ monthTotal }}</span><span class="plate plate-m" aria-hidden="true">{{ monthTotal }}</span><span class="plate plate-y" aria-hidden="true">{{ monthTotal }}</span></div>
-    <p style="font-size:16px;line-height:1.45;margin:18px 0 0;text-wrap:pretty">{{ monthSummary }} {{ prevLine }}</p>
+    <p style="font-size:28px;line-height:1.3;letter-spacing:-.01em;margin:14px 0 0;text-wrap:pretty">{{ sentPre }} <span style="font-weight:600;color:var(--color-accent-700);font-variant-numeric:lining-nums">{{ monthTotal }}</span> {{ sentPost }}</p>
+    <p style="font-size:16px;line-height:1.45;margin:16px 0 0;color:var(--color-neutral-700);text-wrap:pretty">{{ monthSummary }} {{ prevLine }}</p>
 
     <sc-if value="{{ hasSamples }}" hint-placeholder-val="{{ false }}">
       <div style="margin-top:20px;padding:12px 14px;background:var(--color-accent-2-100);color:var(--color-accent-2-800);border-radius:var(--radius-md);font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:6px">
@@ -83,7 +83,10 @@
 
         <div style="position:relative;background:var(--color-neutral-100);box-shadow:var(--shadow-md);padding:clamp(32px,5vw,64px) clamp(24px,4vw,64px) 56px;min-height:1000px;display:flex;flex-direction:column;box-sizing:border-box">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
-            <div style="font-size:48px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+            <div style="display:flex;flex-direction:column;gap:20px">
+              <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}">{{ logoImg }}</sc-if>
+              <div style="font-size:48px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+            </div>
             <div style="display:grid;grid-template-columns:auto 150px;gap:4px 16px;font-size:13px;align-items:baseline">
               <span style="color:var(--color-neutral-700)">Number</span>
               <input value="{{ cur.number }}" onChange="{{ onNumber }}" aria-label="Invoice number" style="font:inherit;color:inherit;background:transparent;border:0;border-bottom:1.5px dashed var(--color-accent-400);border-radius:0;padding:0 0 1px;width:100%">
@@ -169,6 +172,19 @@
           </div>
         </div>
 
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h4 style="margin:0">Logo</h4>
+          <p style="margin:0;font-size:14px;color:var(--color-neutral-700)">Shown at the top of every invoice. PNG with a transparent background works best.</p>
+          <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}">
+            <div style="align-self:flex-start;padding:16px 20px;background:var(--color-neutral-100);box-shadow:var(--shadow-sm)">{{ logoImg }}</div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <button class="btn btn-secondary" onClick="{{ logoClick }}"><i class="ph-duotone ph-image" style="font-size:17px;color:var(--color-accent)"></i>{{ logoButton }}</button>
+            <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" onClick="{{ removeLogo }}" style="color:var(--color-neutral-700)">Remove logo</button></sc-if>
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" ref="{{ logoRef }}" onChange="{{ onLogoFile }}" style="display:none">
+          </div>
+        </div>
+
         <div style="display:flex;flex-direction:column;gap:16px">
           <h4 style="margin:0">How clients pay you</h4>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
@@ -220,7 +236,10 @@
     <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ false }}">
       <div ref="{{ printRef }}" style="width:794px;min-height:1123px;box-sizing:border-box;background:#ffffff;padding:68px 68px 56px;display:flex;flex-direction:column;font-family:var(--font-body);color:var(--color-text)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="font-size:52px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}">{{ logoImgPrint }}</sc-if>
+            <div style="font-size:52px;font-weight:600;letter-spacing:-.02em;line-height:1">Invoice</div>
+          </div>
           <div style="display:grid;grid-template-columns:auto auto;gap:3px 18px;font-size:14px;line-height:1.5"><span style="color:var(--color-neutral-700)">Number</span><span>{{ cur.number }}</span><span style="color:var(--color-neutral-700)">Issued</span><span>{{ issuedLong }}</span><span style="color:var(--color-neutral-700)">Due</span><span>On receipt</span></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:52px;font-size:14px;line-height:1.55">
@@ -257,6 +276,27 @@ class Component extends DCLogic {
   KEY = 'physio-invoice-book-v1';
   printRef = React.createRef();
   restoreRef = React.createRef();
+  logoRef = React.createRef();
+
+  onLogoFile(e) {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, 600 / img.width, 300 / img.height);
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s) || 600; c.height = Math.round(img.height * s) || 300;
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const url = c.toDataURL('image/png');
+        this.setData(d => { d.settings.logo = url; });
+      };
+      img.onerror = () => this.showToast('That image couldn\u2019t be opened. Try a PNG or JPG.');
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  }
   state = this.initialState();
 
   pad(n) { return String(n).padStart(2, '0'); }
@@ -369,8 +409,13 @@ class Component extends DCLogic {
     if (!key || (this.pdfCache && this.pdfCache.key === key)) return;
     this.pdfT = setTimeout(() => { this.getPdf().catch(() => {}); }, 1200);
   }
-  componentDidMount() { this.schedulePdf(); }
-  componentDidUpdate(pp, ps) { if (ps.data !== this.state.data || ps.currentId !== this.state.currentId) this.schedulePdf(); }
+  componentDidMount() { this._lastData = this.state.data; this._lastId = this.state.currentId; this.schedulePdf(); }
+  componentDidUpdate() {
+    if (this._lastData !== this.state.data || this._lastId !== this.state.currentId) {
+      this._lastData = this.state.data; this._lastId = this.state.currentId;
+      this.schedulePdf();
+    }
+  }
   componentWillUnmount() { clearTimeout(this.pdfT); clearTimeout(this.toastT); }
 
   fileName(inv) { return `Invoice ${inv.number}.pdf`; }
@@ -494,9 +539,11 @@ class Component extends DCLogic {
     return {
       businessName: st.businessName || st.yourName || 'Invoice book',
       todayLabel: this.fmt(today, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
-      monthLabel: isNow ? `${mName} so far` : mDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }),
+      monthLabel: mDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }),
       monthTotal: this.money0(total),
-      monthSummary: inMonth.length ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.` : `No invoices in ${mName}.`,
+      sentPre: isNow ? 'You\u2019ve invoiced' : 'You invoiced',
+      sentPost: isNow ? `so far in ${mName}.` : `in ${mName}.`,
+      monthSummary: inMonth.length ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.` : '',
       prevLine: pTotal > 0 ? `${pDate.toLocaleDateString('en-AU', { month: 'long' })} closed at ${this.money0(pTotal)}.` : '',
       prevMonth: () => this.shiftMonth(-1),
       nextMonth: () => this.shiftMonth(1),
@@ -563,6 +610,14 @@ class Component extends DCLogic {
       })),
       addService: () => this.setData(d => { d.settings.services.push({ id: this.uid(), name: 'New service', pricing: 'fixed', price: 0, duration: 45 }); }),
 
+      hasLogo: !!st.logo,
+      logoImg: st.logo ? React.createElement('img', { src: st.logo, alt: `${st.businessName || st.yourName} logo`, style: { display: 'block', maxHeight: 64, maxWidth: 220, objectFit: 'contain', objectPosition: 'left' } }) : null,
+      logoImgPrint: st.logo ? React.createElement('img', { src: st.logo, alt: '', style: { display: 'block', maxHeight: 72, maxWidth: 240, objectFit: 'contain', objectPosition: 'left' } }) : null,
+      logoButton: st.logo ? 'Replace logo' : 'Upload logo',
+      logoClick: () => this.logoRef.current && this.logoRef.current.click(),
+      logoRef: this.logoRef,
+      onLogoFile: e => this.onLogoFile(e),
+      removeLogo: () => this.setData(d => { d.settings.logo = ''; }),
       hasToast: !!toast,
       toast,
     };
