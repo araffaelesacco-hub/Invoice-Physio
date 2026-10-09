@@ -51,3 +51,14 @@ describe('invoice PDF logo', () => {
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
   });
 });
+
+describe('paid invoice PDF', () => {
+  it('stays one page with the payment details', async () => {
+    const d = seed();
+    const inv = d.invoices.find(i => i.number === '2026-014')!;
+    Object.assign(inv, { paidAt: '2026-10-12', paidVia: 'Bank transfer' });
+    const bytes = await buildInvoicePdf(inv, d.settings, fonts);
+    if (process.env.PDF_OUT) writeFileSync(process.env.PDF_OUT.replace('.pdf', '-paid.pdf'), bytes);
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+});

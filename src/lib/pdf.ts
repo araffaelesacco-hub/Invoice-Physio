@@ -6,7 +6,7 @@ import { PDFDocument, PDFFont, PDFPage, rgb, setCharacterSpacing } from 'pdf-lib
 import fontkit from '@pdf-lib/fontkit';
 import type { Invoice, Settings } from './types';
 import { dateLong, dateMedium, money } from './format';
-import { firstName, invoiceTotal, lineAmount, printService } from './invoice';
+import { firstName, invoiceTotal, lineAmount, paidLine, printService } from './invoice';
 import { logoSize } from './logo';
 
 export interface FontBytes {
@@ -32,6 +32,7 @@ const C = {
   muted: '#605d5d', // --color-neutral-700
   rule: '#d7d3d3', // --color-neutral-300
   accent: '#006786', // --color-accent-700
+  paid: '#aa0b56', // --color-accent-2-700
 };
 
 // Session table: 110px | 1fr | 80px | 96px, 14px gaps.
@@ -165,11 +166,19 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
   }
 
   // Header: "Invoice" left, Number / Issued / Due right.
-  s.text('Invoice', LEFT, s.y, { font: semibold, size: 52, lh: 52, spacing: -1.04 });
+  const heading: TextStyle = { font: semibold, size: 52, lh: 52, spacing: -1.04 };
+  s.text('Invoice', LEFT, s.y, heading);
+  if (inv.paidAt) {
+    // A small "Paid" label on the heading's baseline.
+    const label: TextStyle = { font: semibold, size: 13, spacing: 1.04, upper: true, color: C.paid };
+    const baseline = s.y + (52 - semibold.heightAtSize(52)) / 2 + semibold.heightAtSize(52, { descender: false });
+    const top = baseline - semibold.heightAtSize(13, { descender: false }) - (s.lh(label) - semibold.heightAtSize(13)) / 2;
+    s.text('Paid', LEFT + s.width('Invoice', heading) + 16, top, label);
+  }
   const meta: [string, string][] = [
     ['Number', inv.number],
     ['Issued', dateLong(inv.issued)],
-    ['Due', 'On receipt'],
+    inv.paidAt ? ['Paid', dateLong(inv.paidAt)] : ['Due', 'On receipt'],
   ];
   const metaStyle: TextStyle = { ...body, lh: 21 };
   const labelW = Math.max(...meta.map(([l]) => s.width(l, metaStyle)));
@@ -236,7 +245,8 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
   const totalBig: TextStyle = { font: semibold, size: 30 };
   const totalLabel: TextStyle = { font: regular, size: 15 };
   const gst: TextStyle = { font: regular, size: 12, color: C.muted };
-  const totalH = 14 + 1 + 12 + s.lh(totalBig) + 4 + s.lh(gst);
+  const settled: [string, string][] = inv.paidAt ? [[paidLine(inv), money(invoiceTotal(inv))], ['Balance due', money(0)]] : [];
+  const totalH = 14 + 1 + 12 + s.lh(totalBig) + 4 + s.lh(gst) + (settled.length ? 10 + settled.length * s.lh(body) : 0);
   if (s.y + totalH > bottom) s.addPage();
   s.y += 14;
   s.rule(s.y);
@@ -256,11 +266,25 @@ export async function buildInvoicePdf(inv: Invoice, st: Settings, fonts: FontByt
   s.text('No GST has been charged.', RIGHT, s.y, gst, 'right');
   s.y += s.lh(gst);
 
+  // Paid: what was received and when, and that nothing is owing.
+  if (settled.length) {
+    s.y += 10;
+    const valueW = Math.max(...settled.map(([, v]) => s.width(v, body)));
+    for (const [label, value] of settled) {
+      s.text(label, RIGHT - valueW - 28, s.y, muted, 'right');
+      s.text(value, RIGHT, s.y, body, 'right');
+      s.y += s.lh(body);
+    }
+  }
+
   // Payment details and the thank-you line, pushed to the foot of the last page.
-  const pay: [string, string[]][] = [
-    ['Bank transfer', [st.accountName, `BSB ${st.bsb} · Account ${st.accountNumber}`, `Reference ${inv.number}`]],
-    ['PayID', [st.payId, `Reference ${inv.number}`]],
-  ];
+  // Once paid, the bank details give way to the payment record so nobody pays twice.
+  const pay: [string, string[]][] = inv.paidAt
+    ? [['Payment received', [[dateLong(inv.paidAt), inv.paidVia].filter(Boolean).join(' · '), `Reference ${inv.number}`]]]
+    : [
+        ['Bank transfer', [st.accountName, `BSB ${st.bsb} · Account ${st.accountNumber}`, `Reference ${inv.number}`]],
+        ['PayID', [st.payId, `Reference ${inv.number}`]],
+      ];
   const payKicker: TextStyle = { ...kicker, color: C.accent };
   const payH = Math.max(
     ...pay.map(([, rows]) => s.lh(payKicker) + 4 + rows.reduce((a, r) => a + s.wrap(r, body, colW).length * s.lh(body), 0)),

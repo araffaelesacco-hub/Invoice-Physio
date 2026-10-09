@@ -1,5 +1,8 @@
 export type Pricing = 'fixed' | 'hourly';
 
+export const PAYMENT_METHODS = ['Bank transfer', 'PayID', 'Cash', 'Card'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 export interface Service {
   id: string;
   name: string;
@@ -49,6 +52,11 @@ export interface Invoice {
   lines: Line[];
   sentAt: string | null;
   sentVia: 'Shared' | 'Email' | null;
+  /** When the payment was received, YYYY-MM-DD. Once set, the PDF becomes a paid receipt. */
+  paidAt: string | null;
+  paidVia: PaymentMethod | null;
+  /** When the paid receipt was last sent. */
+  receiptSentAt: string | null;
   sample?: true;
 }
 

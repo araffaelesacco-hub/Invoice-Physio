@@ -1,5 +1,5 @@
-import type { Data, Invoice, Line, Service, Settings } from './types';
-import { money, money0, todayISO, uid } from './format';
+import { PAYMENT_METHODS, type Data, type Invoice, type Line, type PaymentMethod, type Service, type Settings } from './types';
+import { dateLong, dateMedium, money, money0, todayISO, uid } from './format';
 
 /** A fixed service charges its price; an hourly one charges price × minutes / 60, rounded to cents. */
 export function lineAmount(l: Pick<Line, 'pricing' | 'price' | 'duration'>): number {
@@ -66,6 +66,9 @@ export function createInvoice(data: Data, today: string): Invoice {
     lines: [newLine(data.settings, today)],
     sentAt: null,
     sentVia: null,
+    paidAt: null,
+    paidVia: null,
+    receiptSentAt: null,
   };
 }
 
@@ -92,15 +95,33 @@ export function printService(l: Line): string {
 }
 
 export function fileName(inv: Invoice): string {
-  return `Invoice ${inv.number}.pdf`;
+  return inv.paidAt ? `Invoice ${inv.number} (paid).pdf` : `Invoice ${inv.number}.pdf`;
 }
 
 export function message(inv: Invoice, st: Settings): { subject: string; text: string } {
+  const from = st.businessName || st.yourName;
+  const hi = `Hi ${firstName(inv.client.name) || 'there'},`;
+  const sign = `Thank you,\n${st.yourName}`;
+  if (inv.paidAt) {
+    return {
+      subject: `Receipt for invoice ${inv.number} from ${from}`,
+      text: `${hi}\n\nThank you for your payment. Please find attached your receipt for invoice ${inv.number} (${money(invoiceTotal(inv))}, paid ${dateLong(inv.paidAt)}).\n\n${sign}`,
+    };
+  }
   return {
-    subject: `Invoice ${inv.number} from ${st.businessName || st.yourName}`,
-    text: `Hi ${firstName(inv.client.name) || 'there'},\n\nPlease find attached invoice ${inv.number} for ${money(invoiceTotal(inv))}. Payment details are on the invoice.\n\nThank you,\n${st.yourName}`,
+    subject: `Invoice ${inv.number} from ${from}`,
+    text: `${hi}\n\nPlease find attached invoice ${inv.number} for ${money(invoiceTotal(inv))}. Payment details are on the invoice.\n\n${sign}`,
   };
 }
+
+/** "Paid 12 Oct 2026 by bank transfer" */
+export function paidLine(inv: Invoice): string {
+  if (!inv.paidAt) return '';
+  return `Paid ${dateMedium(inv.paidAt)}${inv.paidVia ? ` by ${inv.paidVia === 'PayID' ? 'PayID' : inv.paidVia.toLowerCase()}` : ''}`;
+}
+
+/** Sent or paid invoices are records the client may already hold, so they're locked against casual edits. */
+export const isIssued = (inv: Invoice) => !!(inv.sentAt || inv.paidAt);
 
 /** Past clients by name, with their most recent email, for the Bill to datalist. */
 export function clientDirectory(invoices: Invoice[]): Record<string, string> {
@@ -159,6 +180,9 @@ export function normalizeData(x: unknown): Data | null {
     })),
     sentAt: i.sentAt ? str(i.sentAt) : null,
     sentVia: i.sentVia === 'Shared' || i.sentVia === 'Email' ? i.sentVia : null,
+    paidAt: /^\d{4}-\d{2}-\d{2}$/.test(str(i.paidAt)) ? str(i.paidAt) : null,
+    paidVia: PAYMENT_METHODS.includes(i.paidVia as PaymentMethod) ? (i.paidVia as PaymentMethod) : null,
+    receiptSentAt: i.receiptSentAt ? str(i.receiptSentAt) : null,
   }));
   return { settings, invoices };
 }

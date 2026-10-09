@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { clientDirectory, createInvoice, invoiceTotal, lineAmount, message, nextLine, nextNumber, printService, warningsFor } from './invoice';
+import { clientDirectory, createInvoice, fileName, invoiceTotal, isIssued, lineAmount, message, nextLine, nextNumber, paidLine, printService, warningsFor } from './invoice';
 import { dateMasthead, dateMedium, dateLong, money, money0, parseISO, shiftMonth } from './format';
 import { seed } from './seed';
 import type { Invoice } from './types';
 
 const inv = (number: string, issued = '2026-10-01'): Invoice => ({
-  id: number, number, issued, client: { name: '', email: '' }, lines: [], sentAt: null, sentVia: null,
+  id: number, number, issued, client: { name: '', email: '' }, lines: [], sentAt: null, sentVia: null, paidAt: null, paidVia: null, receiptSentAt: null,
 });
 
 describe('amounts', () => {
@@ -142,5 +142,39 @@ describe('logo', () => {
     const solid = new Uint8ClampedArray(w * h * 4).fill(255);
     solid.set([0, 0, 0, 255], (6 * w + 1) * 4);
     expect(contentBounds(solid, w, h)).toEqual({ x: 1, y: 6, width: 1, height: 1 });
+  });
+});
+
+describe('paid', () => {
+  const paidInvoice = () => {
+    const d = seed();
+    const inv = d.invoices.find(i => i.number === '2026-014')!;
+    Object.assign(inv, { paidAt: '2026-10-12', paidVia: 'Bank transfer' });
+    return { d, inv };
+  };
+  it('writes the receipt email and file name', () => {
+    const { d, inv } = paidInvoice();
+    const m = message(inv, d.settings);
+    expect(m.subject).toBe('Receipt for invoice 2026-014 from Harper Physiotherapy');
+    expect(m.text).toBe('Hi Margaret,\n\nThank you for your payment. Please find attached your receipt for invoice 2026-014 ($415.00, paid 12 October 2026).\n\nThank you,\nSam Harper');
+    expect(fileName(inv)).toBe('Invoice 2026-014 (paid).pdf');
+  });
+  it('describes the payment', () => {
+    const { inv } = paidInvoice();
+    expect(paidLine(inv)).toBe('Paid 12 Oct 2026 by bank transfer');
+    inv.paidVia = 'PayID';
+    expect(paidLine(inv)).toBe('Paid 12 Oct 2026 by PayID');
+  });
+  it('locks sent or paid invoices', () => {
+    const { inv } = paidInvoice();
+    expect(isIssued(inv)).toBe(true);
+    expect(isIssued({ ...inv, sentAt: null, paidAt: null })).toBe(false);
+  });
+  it('keeps valid payment details from a backup and drops bad ones', async () => {
+    const { normalizeData } = await import('./invoice');
+    const inv = (extra: object) => normalizeData({ settings: {}, invoices: [{ number: '1', issued: '2026-10-01', ...extra }] })!.invoices[0];
+    expect(inv({ paidAt: '2026-10-12', paidVia: 'Cash' })).toMatchObject({ paidAt: '2026-10-12', paidVia: 'Cash' });
+    expect(inv({ paidAt: 'yesterday', paidVia: 'Bitcoin' })).toMatchObject({ paidAt: null, paidVia: null });
+    expect(inv({})).toMatchObject({ paidAt: null, paidVia: null, receiptSentAt: null });
   });
 });

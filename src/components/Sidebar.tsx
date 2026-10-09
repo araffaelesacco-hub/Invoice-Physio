@@ -29,6 +29,10 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
     ? `${plural(inMonth.length, 'invoice')}, ${plural(sessions, 'session')}.`
     : `No invoices in ${monthName(month)}.`;
   const prevLine = prevTotal > 0 ? ` ${monthName(prev)} closed at ${money0(prevTotal)}.` : '';
+  // The big figure stays what was invoiced; this says how much of it has come in.
+  const received = inMonth.filter(i => i.paidAt).reduce((a, i) => a + invoiceTotal(i), 0);
+  const owing = total - received;
+  const paidLine = !inMonth.length ? '' : owing > 0.004 ? ` ${money0(received)} received, ${money0(owing)} still to come.` : ' All paid.';
 
   return (
     <aside className="side">
@@ -47,7 +51,7 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
         </div>
       </div>
       <PlateNumeral className="month-total">{money0(total)}</PlateNumeral>
-      <p className="month-summary">{summary}{prevLine}</p>
+      <p className="month-summary">{summary}{paidLine}{prevLine}</p>
 
       {data.invoices.some(i => i.sample) && (
         <div className="sample-note">
@@ -62,7 +66,9 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
         {inMonth.map(i => (
           <button key={i.id} className={`inv-row${showingInvoice && i.id === currentId ? ' is-current' : ''}`} onClick={() => onOpen(i.id)}>
             <span className="inv-row-text">
-              <span className={`inv-row-kicker${i.sentAt ? '' : ' is-unsent'}`}>{i.number} · {i.sentAt ? dateShort(i.issued) : 'Not sent'}</span>
+              <span className={`inv-row-kicker${i.paidAt ? ' is-paid' : i.sentAt ? '' : ' is-unsent'}`}>
+                {i.number} · {i.paidAt ? `Paid ${dateShort(i.paidAt)}` : i.sentAt ? `${dateShort(i.issued)} · Unpaid` : 'Not sent'}
+              </span>
               <span className="inv-row-client">{i.client.name.trim() || 'New client'}</span>
             </span>
             <span className="inv-row-amount">{money(invoiceTotal(i))}</span>

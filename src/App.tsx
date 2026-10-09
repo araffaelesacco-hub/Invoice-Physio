@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconContext } from '@phosphor-icons/react';
-import type { Data, Invoice, Settings } from './lib/types';
+import type { Data, Invoice, PaymentMethod, Settings } from './lib/types';
 import { todayISO } from './lib/format';
-import { clientDirectory, createInvoice, fileName, message, normalizeData, sortDesc, warningsFor } from './lib/invoice';
+import { clientDirectory, createInvoice, fileName, isIssued, message, normalizeData, sortDesc, warningsFor } from './lib/invoice';
 import { downloadBlob, load, save } from './lib/storage';
 import { retrimLogo } from './lib/logo';
 import { Sidebar } from './components/Sidebar';
@@ -25,6 +25,8 @@ export default function App() {
   const pdfTimer = useRef<number>();
   const pdfCache = useRef<{ key: string; blob: Blob } | null>(null);
   const saveFailed = useRef(false);
+  // Sent or paid invoices unlocked for editing in this session.
+  const [unlocked, setUnlocked] = useState<Set<string>>(() => new Set());
 
   const today = todayISO();
   const st = data.settings;
@@ -114,7 +116,23 @@ export default function App() {
     setMonth(today.slice(0, 7));
   };
 
-  const markSent = (via: 'Shared' | 'Email') => updInv(inv => { inv.sentAt = todayISO(); inv.sentVia = via; });
+  // Sending a paid invoice sends the receipt; the invoice counts as sent too if it never was.
+  const markSent = (via: 'Shared' | 'Email') =>
+    updInv(inv => {
+      const t = todayISO();
+      if (inv.paidAt) inv.receiptSentAt = t;
+      if (!inv.paidAt || !inv.sentAt) {
+        inv.sentAt = t;
+        inv.sentVia = via;
+      }
+    });
+
+  const markPaid = (date: string, via: PaymentMethod) => updInv(inv => { inv.paidAt = date; inv.paidVia = via; });
+
+  const markUnpaid = () => {
+    if (!cur || !window.confirm(`Mark invoice ${cur.number} as not paid? Its PDF will show your payment details again instead of the payment.`)) return;
+    updInv(inv => { inv.paidAt = null; inv.paidVia = null; inv.receiptSentAt = null; });
+  };
 
   const emailFallback = (inv: Invoice, blob: Blob) => {
     const m = message(inv, st);
@@ -174,7 +192,17 @@ export default function App() {
 
   const deleteInvoice = () => {
     if (!cur) return;
-    if (!window.confirm(`Delete invoice ${cur.number}? This can't be undone.`)) return;
+    if (isIssued(cur) && !cur.sample) {
+      // A sent or paid invoice is a record to keep, so deleting one takes typing its number.
+      const typed = window.prompt(
+        `Invoice ${cur.number} has been ${cur.paidAt ? 'paid' : 'sent'}. The ATO expects you to keep invoices for five years, so it's usually best to keep it.\n\nTo delete it anyway, type ${cur.number}:`,
+      );
+      if (typed === null) return;
+      if (typed.trim() !== cur.number) {
+        showToast(`Not deleted: that didn\u2019t match ${cur.number}.`);
+        return;
+      }
+    } else if (!window.confirm(`Delete invoice ${cur.number}? This can't be undone.`)) return;
     const rest = data.invoices.filter(i => i.id !== cur.id).sort(sortDesc);
     const next = rest.find(i => i.issued.slice(0, 7) === month) || rest[0];
     setData(d => { d.invoices = d.invoices.filter(i => i.id !== cur.id); });
@@ -239,6 +267,10 @@ export default function App() {
               clients={clients}
               warnings={warnings}
               busy={busy}
+              locked={isIssued(cur) && !unlocked.has(cur.id)}
+              onUnlock={() => setUnlocked(s => new Set(s).add(cur.id))}
+              onMarkPaid={markPaid}
+              onMarkUnpaid={markUnpaid}
               onUpdate={updInv}
               onIssued={iso => {
                 updInv(inv => { inv.issued = iso; });

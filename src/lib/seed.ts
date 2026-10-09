@@ -1,4 +1,4 @@
-import type { Data, Invoice, Service } from './types';
+import type { Data, Invoice, PaymentMethod, Service } from './types';
 import { uid } from './format';
 
 /** First-run sample data. Invoices are flagged `sample` so "Clear sample invoices" removes only these. */
@@ -19,7 +19,7 @@ export function seed(): Data {
     travel: true,
     travelFee: 25,
   });
-  const I = (number: string, issued: string, name: string, email: string, lines: Invoice['lines'], sent: boolean): Invoice => ({
+  const I = (number: string, issued: string, name: string, email: string, lines: Invoice['lines'], sent: boolean, paid?: [string, PaymentMethod]): Invoice => ({
     id: uid(),
     number,
     issued,
@@ -27,6 +27,9 @@ export function seed(): Data {
     lines,
     sentAt: sent ? issued : null,
     sentVia: sent ? 'Shared' : null,
+    paidAt: paid ? paid[0] : null,
+    paidVia: paid ? paid[1] : null,
+    receiptSentAt: null,
     sample: true,
   });
   return {
@@ -45,11 +48,11 @@ export function seed(): Data {
       services,
     },
     invoices: [
-      I('2026-008', '2026-09-08', 'Helen Carter', 'helen.carter@email.com', [L('2026-09-01', 's1'), L('2026-09-04', 's2'), L('2026-09-08', 's2')], true),
-      I('2026-009', '2026-09-18', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-09-11', 's1'), L('2026-09-18', 's2')], true),
-      I('2026-010', '2026-09-29', 'Priya Shah', 'priya.shah@email.com', [L('2026-09-22', 's1'), L('2026-09-29', 's3', 60)], true),
-      I('2026-011', '2026-10-01', "Daniel O'Brien", 'daniel.obrien@email.com', [L('2026-10-01', 's1')], true),
-      I('2026-012', '2026-10-02', 'Priya Shah', 'priya.shah@email.com', [L('2026-10-02', 's2')], true),
+      I('2026-008', '2026-09-08', 'Helen Carter', 'helen.carter@email.com', [L('2026-09-01', 's1'), L('2026-09-04', 's2'), L('2026-09-08', 's2')], true, ['2026-09-10', 'Bank transfer']),
+      I('2026-009', '2026-09-18', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-09-11', 's1'), L('2026-09-18', 's2')], true, ['2026-09-19', 'PayID']),
+      I('2026-010', '2026-09-29', 'Priya Shah', 'priya.shah@email.com', [L('2026-09-22', 's1'), L('2026-09-29', 's3', 60)], true, ['2026-10-02', 'Bank transfer']),
+      I('2026-011', '2026-10-01', "Daniel O'Brien", 'daniel.obrien@email.com', [L('2026-10-01', 's1')], true, ['2026-10-03', 'PayID']),
+      I('2026-012', '2026-10-02', 'Priya Shah', 'priya.shah@email.com', [L('2026-10-02', 's2')], true, ['2026-10-02', 'Card']),
       I('2026-013', '2026-10-05', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-10-02', 's2'), L('2026-10-05', 's2')], true),
       I('2026-014', '2026-10-07', 'Margaret Lee', 'margaret.lee@email.com', [L('2026-09-30', 's1'), L('2026-10-02', 's2'), L('2026-10-06', 's3')], false),
     ],

@@ -185,3 +185,35 @@ select.ed { width: auto; min-width: 0; max-width: 100%; }
   padding: 14px 18px; background: var(--color-neutral-900); color: var(--color-bg);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); font-size: 14px; line-height: 1.5;
 }
+
+/* Paid / unpaid */
+[hidden] { display: none !important; }
+.status.is-paid, .inv-row-kicker.is-paid { color: var(--color-accent-700); }
+.paid-label {
+  margin-left: 16px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color-accent-2-700);
+}
+.settled {
+  display: grid; grid-template-columns: auto auto; justify-content: end; gap: 0 28px;
+  margin-top: 10px; font-size: 13px; text-align: right;
+}
+.pay-panel, .locked-note {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  padding: 12px 16px; border-radius: var(--radius-md); font-size: 14px; line-height: 1.5;
+}
+.pay-panel { background: var(--color-accent-100); }
+.pay-panel strong { font-weight: 600; }
+.pay-panel label { display: flex; align-items: baseline; gap: 8px; }
+.pay-panel .ed { width: auto; }
+.pay-panel-actions { display: flex; gap: 6px; margin-left: auto; }
+.locked-note { background: var(--color-surface); color: var(--color-neutral-700); }
+.locked-note .btn { margin-left: auto; padding-block: 4px; }
+
+/* Locked fields read as plain text. */
+.ed[readonly], .ed:disabled { border-bottom-color: transparent; }
+select.ed:disabled { opacity: 1; color: inherit; -webkit-text-fill-color: currentColor; appearance: none; -webkit-appearance: none; }
+.ed[readonly]::-webkit-calendar-picker-indicator,
+.ed[readonly]::-webkit-inner-spin-button,
+.ed[readonly]::-webkit-outer-spin-button { display: none; }
+.ed[readonly] { cursor: default; }
+.ed-duration[readonly] { width: 30px; }
