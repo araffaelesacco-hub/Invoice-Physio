@@ -161,7 +161,7 @@ export function InvoiceView(props: Props) {
           {inv.lines.map((l, idx) => (
             <div className="session" key={l.id}>
               <div className="sessions-grid">
-                <input className="ed" type="date" value={l.date} readOnly={locked} onChange={e => updLine(idx, { date: e.target.value })} aria-label="Session date" />
+                <input className="ed cell-date" type="date" value={l.date} readOnly={locked} onChange={e => updLine(idx, { date: e.target.value })} aria-label="Session date" />
                 <span className="session-service">
                   <select
                     className="ed"
@@ -181,7 +181,7 @@ export function InvoiceView(props: Props) {
                 <span className="session-duration">
                   <NumberInput className="ed ed-duration" min={5} step={5} readOnly={locked} value={l.duration} onCommit={n => updLine(idx, { duration: n })} aria-label="Duration in minutes" />min
                 </span>
-                <span className="right">{money(lineAmount(l))}</span>
+                <span className="right cell-amount">{money(lineAmount(l))}</span>
                 <span className="session-tools" hidden={locked}>
                   <button
                     className={`btn btn-ghost ${l.travel ? 'travel-on' : 'travel-off'}`}
@@ -198,12 +198,12 @@ export function InvoiceView(props: Props) {
                 </span>
               </div>
               {l.travel ? (
-                <div className="sessions-grid travel-row"><span /><span>Home visit travel</span><span /><span className="right">{money(l.travelFee)}</span></div>
+                <div className="sessions-grid travel-row"><span className="cell-gap" /><span>Home visit travel</span><span className="cell-gap" /><span className="right">{money(l.travelFee)}</span></div>
               ) : (
                 // Suggested, never added on its own: one click adds it to this visit.
                 !locked && (
                   <div className="sessions-grid travel-suggest">
-                    <span />
+                    <span className="cell-gap" />
                     <button className="btn btn-ghost" onClick={() => updLine(idx, { travel: true, travelFee: Number(st.travelFee) || 0 })}>
                       <Plus size={13} />Add home visit travel ({money(Number(st.travelFee) || 0)})
                     </button>

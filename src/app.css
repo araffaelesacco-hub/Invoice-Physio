@@ -243,3 +243,88 @@ dialog.confirm p { margin: 0 0 8px; }
 .btn-danger { background: var(--color-accent-2-700); color: var(--color-bg); }
 .btn-danger:hover:not(:disabled) { background: var(--color-accent-2-800); }
 .btn-danger:active:not(:disabled) { background: var(--color-accent-2-900); }
+
+/* ── Phones and narrow windows ─────────────────────────────────────────
+   One column. The month figure and the invoice list are one screen; an
+   open invoice or Settings is another, with a back button. The sheet and
+   the services table restack so nothing needs a wide screen. */
+.mobile-back { display: none; }
+
+@media (max-width: 880px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; height: auto; overflow: visible; padding: 20px 16px 28px; }
+  .app.show-detail .side { display: none; }
+  .app:not(.show-detail) .main { display: none; }
+  .main { padding: 10px 16px 48px; }
+  .mobile-back { display: inline-flex; margin: 0 0 6px -5px; padding-block: 8px; }
+
+  .month-total { font-size: 72px; }
+  .inv-row-delete { padding: 10px; }
+
+  /* Invoice toolbar: title on its own line, actions below. */
+  .invoice-view { gap: 14px; }
+  .toolbar { gap: 8px; }
+  .toolbar-title { flex-basis: 100%; }
+  .toolbar .btn { padding-inline: 12px; }
+  .toolbar .btn-send { flex: 1 1 auto; }
+  .pay-panel-actions, .locked-note .btn { margin-left: 0; }
+
+  /* The sheet */
+  .sheet { padding: 24px 18px 32px; min-height: 0; }
+  .sheet-head { flex-direction: column; gap: 18px; }
+  .sheet-title { font-size: 40px; }
+  .sheet-meta { grid-template-columns: auto minmax(0, 1fr); font-size: 15px; gap: 6px 16px; }
+  .parties { grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; font-size: 15px; }
+  .party-name, .ed.party-name { font-size: 17px; }
+
+  /* Each session: date and amount, then the service, then length and tools. */
+  .sessions { margin-top: 32px; font-size: 15px; }
+  .sessions-head { display: none; }
+  .session { padding: 12px 0; border-top: 1px solid var(--color-neutral-300); }
+  .session > .sessions-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "date amount" "service service" "length tools";
+    gap: 8px 12px; align-items: center;
+  }
+  .cell-date { grid-area: date; max-width: 170px; }
+  .cell-amount { grid-area: amount; }
+  .session-service { grid-area: service; }
+  .session-duration { grid-area: length; }
+  .session-tools { grid-area: tools; }
+  .session-tools .btn { padding: 8px; }
+  .ed-duration { width: 52px; }
+  .travel-row { grid-template-columns: minmax(0, 1fr) auto; padding-top: 8px; }
+  .travel-suggest { grid-template-columns: minmax(0, 1fr); padding-top: 6px; }
+  .travel-row .cell-gap, .travel-suggest .cell-gap { display: none; }
+  .travel-suggest .btn { grid-column: 1; font-size: 14px; padding-block: 6px; }
+  .total { border-top-color: var(--color-neutral-300); gap: 18px; }
+  .total-amount { font-size: 26px; }
+  .settled { font-size: 14px; }
+  .payment { grid-template-columns: minmax(0, 1fr); gap: 22px; padding-top: 36px; font-size: 15px; }
+  .thanks { font-size: 15px; }
+
+  /* Settings: each service stacks into name / pricing and price / length. */
+  .settings { gap: 34px; }
+  .service-head { display: none; }
+  .service-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+    grid-template-areas: "name name remove" "pricing price price" "length length length";
+    gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--color-neutral-300);
+  }
+  .sv-name { grid-area: name; }
+  .sv-pricing { grid-area: pricing; }
+  .sv-price { grid-area: price; }
+  .sv-length { grid-area: length; max-width: 160px; }
+  .sv-remove { grid-area: remove; }
+  .travel-fee { max-width: none; }
+
+  /* 16px fields stop iPhone Safari zooming in when one is tapped. */
+  .ed, .input, select.ed { font-size: 16px; }
+
+  .toast { left: 16px; right: 16px; transform: none; width: auto; max-width: none; bottom: 16px; }
+}
+
+/* Touch screens can't hover, so the list's bins stay visible. */
+@media (hover: none) {
+  .inv-row-delete { color: var(--color-neutral-600); }
+}

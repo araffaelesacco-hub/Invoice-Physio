@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IconContext } from '@phosphor-icons/react';
+import { CaretLeft, IconContext } from '@phosphor-icons/react';
 import type { Data, Invoice, PaymentMethod, Settings } from './lib/types';
 import { todayISO } from './lib/format';
 import { clientDirectory, createInvoice, fileName, isIssued, message, normalizeData, sortDesc, warningsFor } from './lib/invoice';
@@ -105,9 +105,21 @@ export default function App() {
   const warnings = useMemo(() => (cur ? warningsFor(cur, st) : []), [cur, st]);
   const clients = useMemo(() => clientDirectory(data.invoices), [data.invoices]);
 
+  // On a phone the list and the open invoice (or Settings) are separate screens.
+  const [mobileDetail, setMobileDetail] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 880px)').matches) window.scrollTo(0, 0);
+  }, [mobileDetail]);
+
   const openInvoice = (id: string) => {
     setCurrentId(id);
     setView('invoice');
+    setMobileDetail(true);
+  };
+
+  const openSettings = () => {
+    setView('settings');
+    setMobileDetail(true);
   };
 
   const newInvoice = () => {
@@ -116,6 +128,7 @@ export default function App() {
     setCurrentId(inv.id);
     setView('invoice');
     setMonth(today.slice(0, 7));
+    setMobileDetail(true);
   };
 
   // Sending a paid invoice sends the receipt; the invoice counts as sent too if it never was.
@@ -241,7 +254,7 @@ export default function App() {
 
   return (
     <IconContext.Provider value={{ weight: 'duotone' }}>
-      <div className="app">
+      <div className={`app${mobileDetail ? ' show-detail' : ''}`}>
         <Sidebar
           data={data}
           today={today}
@@ -252,12 +265,15 @@ export default function App() {
           onOpen={openInvoice}
           onNew={newInvoice}
           onClearSamples={clearSamples}
-          onSettings={() => setView('settings')}
+          onSettings={openSettings}
           onBackup={backup}
           onDelete={setDeletingId}
         />
 
         <main className="main">
+          <button className="btn btn-ghost mobile-back" onClick={() => setMobileDetail(false)}>
+            <CaretLeft size={16} />Invoices
+          </button>
           {showInvoice && cur && (
             <InvoiceView
               inv={cur}
