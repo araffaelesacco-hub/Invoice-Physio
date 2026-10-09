@@ -8,7 +8,21 @@ There is no server. Everything is stored in the browser's `localStorage` on your
 
 The app is published at **https://araffaelesacco-hub.github.io/Invoice-Physio/**. Open it in Safari and bookmark it, or use File → Add to Dock. Every change merged into `main` is tested, built and published by `.github/workflows/pages.yml`, so reloading the page picks it up. Your invoices are stored only in Safari on your Mac, for that address; the website serves only the app.
 
-On a phone or a narrow window the layout switches to one column: the month figure and invoice list are one screen, and an open invoice or Settings is another, with a back button. Each device keeps its own copy of your invoices; use **Backup** and **Restore from backup** to move them between your phone and your Mac.
+On a phone or a narrow window the layout switches to one column: the month figure and invoice list are one screen, and an open invoice or Settings is another, with a back button.
+
+### Sync between devices (optional)
+
+Each device keeps its own copy of your invoices. To keep the Mac and the phone in step, with invoice numbers that continue from one device to the other, turn on **Settings → Sync between devices**:
+
+1. Create a **private** GitHub repository for the data, e.g. `invoice-book-data`. The app refuses a public one.
+2. Create a fine-grained access token with access to **only that repository** and **Contents: Read and write**.
+3. Enter the repository, token and a passphrase in Settings, then do the same on the other device with the same passphrase.
+
+The book is gzipped and encrypted on the device (AES-256-GCM, key from the passphrase via PBKDF2-SHA256, 600,000 rounds) before it's uploaded, so GitHub only holds ciphertext. Each device stores the token and the derived key, never the passphrase; if the passphrase is lost, the synced copy can't be opened, but each device keeps its own copy and Backup still works. The logo travels in a separate file so the main file stays small.
+
+Sync runs when the app opens, a few seconds after changes, when you return to the app or come back online, when you leave it, and just before **New invoice**, so numbers continue across devices. Each invoice carries the time it last changed and the newer copy wins; deletes are remembered so they reach the other device. If two devices hand out the same number while one is offline, the newer unsent invoice is renumbered and you're told; sent or paid invoices are never renumbered. Sample invoices never leave the device. The logic is in `src/lib/syncCore.ts` (merging), `src/lib/crypto.ts`, `src/lib/github.ts` and `src/lib/sync.ts`, with tests in `src/lib/sync.test.ts`.
+
+Without sync, use **Backup** and **Restore from backup** to move your invoices between devices.
 
 ## Using it without a web address
 

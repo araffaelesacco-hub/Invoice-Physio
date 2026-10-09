@@ -4,6 +4,8 @@ import type { Pricing, Settings } from '../lib/types';
 import { uid } from '../lib/format';
 import { prepareLogo } from '../lib/logo';
 import { Logo, NumberInput } from './fields';
+import { SyncSection } from './SyncSection';
+import type { SyncApi } from '../useSync';
 
 type TextKey = 'yourName' | 'businessName' | 'abn' | 'phone' | 'email' | 'accountName' | 'bsb' | 'accountNumber' | 'payId';
 
@@ -14,9 +16,10 @@ interface Props {
   onBackup: () => void;
   onRestore: (file: File) => void;
   onMessage: (msg: string) => void;
+  sync: SyncApi;
 }
 
-export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMessage }: Props) {
+export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMessage, sync }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
@@ -129,10 +132,12 @@ export function SettingsView({ st, onUpdate, onDone, onBackup, onRestore, onMess
         </div>
       </section>
 
+      <SyncSection sync={sync} onMessage={onMessage} />
+
       <section className="settings-section data">
         <h4>Your data</h4>
         <p className="settings-body">
-          Everything is saved in this browser on this device and nowhere else. Your phone and your Mac keep separate copies; use a backup to move them across. Clearing your browser's website data deletes it, so download a backup now and then and keep it somewhere safe.
+          Everything is saved in this browser on this device{sync.config ? ', and an encrypted copy is kept in your private GitHub repository.' : ' and nowhere else. Without sync, your phone and your Mac keep separate copies; use a backup to move them across.'} Clearing your browser's website data deletes this device's copy, so download a backup now and then and keep it somewhere safe.
         </p>
         <div className="data-actions">
           <button className="btn btn-secondary" onClick={onBackup}><DownloadSimple size={17} className="icon-accent" />Download backup</button>

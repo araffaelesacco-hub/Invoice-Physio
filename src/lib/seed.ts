@@ -47,6 +47,9 @@ export function seed(): Data {
       travelFee: 25,
       services,
     },
+    // Samples never win over real settings from another device.
+    settingsUpdatedAt: 0,
+    deleted: {},
     invoices: [
       I('2026-008', '2026-09-08', 'Helen Carter', 'helen.carter@email.com', [L('2026-09-01', 's1'), L('2026-09-04', 's2'), L('2026-09-08', 's2')], true, ['2026-09-10', 'Bank transfer']),
       I('2026-009', '2026-09-18', 'Tom Nguyen', 'tom.nguyen@email.com', [L('2026-09-11', 's1'), L('2026-09-18', 's2')], true, ['2026-09-19', 'PayID']),
