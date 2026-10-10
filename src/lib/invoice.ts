@@ -58,9 +58,10 @@ export function nextLine(st: Settings, inv: Invoice, today: string): Line {
   return l;
 }
 
-export function createInvoice(data: Data, today: string): Invoice {
+export function createInvoice(data: Data, today: string, id: string = uid()): Invoice {
+  const now = Date.now();
   return {
-    id: uid(),
+    id,
     number: nextNumber(data.invoices, today.slice(0, 4)),
     issued: today,
     client: { name: '', email: '' },
@@ -70,6 +71,8 @@ export function createInvoice(data: Data, today: string): Invoice {
     paidAt: null,
     paidVia: null,
     receiptSentAt: null,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 
@@ -184,6 +187,12 @@ export function normalizeData(x: unknown): Data | null {
     paidAt: /^\d{4}-\d{2}-\d{2}$/.test(str(i.paidAt)) ? str(i.paidAt) : null,
     paidVia: PAYMENT_METHODS.includes(i.paidVia as PaymentMethod) ? (i.paidVia as PaymentMethod) : null,
     receiptSentAt: i.receiptSentAt ? str(i.receiptSentAt) : null,
+    createdAt: num(i.createdAt) || undefined,
+    updatedAt: num(i.updatedAt) || undefined,
   }));
-  return { settings, invoices };
+  const deleted: Record<string, number> = {};
+  if (d.deleted && typeof d.deleted === 'object') {
+    for (const [id, at] of Object.entries(d.deleted)) if (num(at)) deleted[id] = num(at);
+  }
+  return { settings, invoices, settingsUpdatedAt: num(d.settingsUpdatedAt), deleted };
 }

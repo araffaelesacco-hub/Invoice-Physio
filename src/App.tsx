@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaretLeft, IconContext } from '@phosphor-icons/react';
 import type { Data, Invoice, PaymentMethod, Settings } from './lib/types';
-import { todayISO } from './lib/format';
+import { todayISO, uid } from './lib/format';
 import { clientDirectory, createInvoice, fileName, isIssued, message, normalizeData, sortDesc, warningsFor } from './lib/invoice';
 import { downloadBlob, load, save } from './lib/storage';
 import { retrimLogo } from './lib/logo';
@@ -9,6 +9,7 @@ import { Sidebar } from './components/Sidebar';
 import { InvoiceView } from './components/InvoiceView';
 import { SettingsView } from './components/SettingsView';
 import { DeleteDialog } from './components/DeleteDialog';
+import { useSync } from './useSync';
 
 type View = 'invoice' | 'settings' | 'empty';
 
@@ -47,6 +48,11 @@ export default function App() {
     saveFailed.current = !ok;
   }, [data, showToast]);
 
+  // Sync reads the latest book through this, including edits made mid-sync.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const sync = useSync(data, dataRef, setDataState, showToast);
+
   const setData = useCallback((fn: (d: Data) => void) => {
     setDataState(prev => {
       const next = structuredClone(prev);
@@ -59,7 +65,10 @@ export default function App() {
     (fn: (inv: Invoice) => void) =>
       setData(d => {
         const inv = d.invoices.find(i => i.id === currentId);
-        if (inv) fn(inv);
+        if (inv) {
+          fn(inv);
+          inv.updatedAt = Date.now();
+        }
       }),
     [currentId, setData],
   );
@@ -92,7 +101,7 @@ export default function App() {
     if (!logo) return;
     let live = true;
     retrimLogo(logo).then(trimmed => {
-      if (live && trimmed) setData(d => { if (d.settings.logo === logo) d.settings.logo = trimmed; });
+      if (live && trimmed) setData(d => { if (d.settings.logo === logo) { d.settings.logo = trimmed; d.settingsUpdatedAt = Date.now(); } });
     });
     return () => { live = false; };
   }, [logo, setData]);
@@ -122,10 +131,12 @@ export default function App() {
     setMobileDetail(true);
   };
 
-  const newInvoice = () => {
-    const inv = createInvoice(data, today);
-    setData(d => { d.invoices.push(inv); });
-    setCurrentId(inv.id);
+  const newInvoice = async () => {
+    // With sync on, catch up first so the number continues from the other devices.
+    await sync.freshen();
+    const id = uid();
+    setData(d => { d.invoices.push(createInvoice(d, today, id)); });
+    setCurrentId(id);
     setView('invoice');
     setMonth(today.slice(0, 7));
     setMobileDetail(true);
@@ -210,7 +221,11 @@ export default function App() {
     const gone = data.invoices.find(i => i.id === id);
     if (!gone) return;
     setDeletingId(null);
-    setData(d => { d.invoices = d.invoices.filter(i => i.id !== id); });
+    setData(d => {
+      d.invoices = d.invoices.filter(i => i.id !== id);
+      // Remembered so the delete reaches the other devices too.
+      d.deleted = { ...d.deleted, [id]: Date.now() };
+    });
     if (id === currentId) {
       const rest = data.invoices.filter(i => i.id !== id).sort(sortDesc);
       const next = rest.find(i => i.issued.slice(0, 7) === month) || rest[0];
@@ -268,6 +283,7 @@ export default function App() {
           onSettings={openSettings}
           onBackup={backup}
           onDelete={setDeletingId}
+          syncStatus={sync.status}
         />
 
         <main className="main">
@@ -301,7 +317,8 @@ export default function App() {
           {view === 'settings' && (
             <SettingsView
               st={st}
-              onUpdate={fn => setData(d => fn(d.settings))}
+              onUpdate={fn => setData(d => { fn(d.settings); d.settingsUpdatedAt = Date.now(); })}
+              sync={sync}
               onDone={() => setView(cur ? 'invoice' : 'empty')}
               onBackup={backup}
               onRestore={restore}

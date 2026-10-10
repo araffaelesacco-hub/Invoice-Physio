@@ -1,4 +1,5 @@
-import { CaretLeft, CaretRight, FloppyDisk, GearSix, PenNib, Trash } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, CloudCheck, CloudSlash, CloudWarning, FloppyDisk, GearSix, PenNib, Trash, ArrowsClockwise } from '@phosphor-icons/react';
+import type { SyncStatus } from '../useSync';
 import type { Data } from '../lib/types';
 import { dateMasthead, dateShort, money, money0, monthName, monthYear, plural, shiftMonth } from '../lib/format';
 import { invoiceTotal, sortDesc } from '../lib/invoice';
@@ -16,9 +17,10 @@ interface Props {
   onSettings: () => void;
   onBackup: () => void;
   onDelete: (id: string) => void;
+  syncStatus: SyncStatus;
 }
 
-export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth, onOpen, onNew, onClearSamples, onSettings, onBackup, onDelete }: Props) {
+export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth, onOpen, onNew, onClearSamples, onSettings, onBackup, onDelete, syncStatus }: Props) {
   const st = data.settings;
   const inMonth = data.invoices.filter(i => i.issued.slice(0, 7) === month).sort(sortDesc);
   const total = inMonth.reduce((a, i) => a + invoiceTotal(i), 0);
@@ -86,7 +88,29 @@ export function Sidebar({ data, today, month, currentId, showingInvoice, onMonth
       <div className="side-foot">
         <button className="btn btn-ghost" onClick={onSettings}><GearSix size={17} />Settings</button>
         <button className="btn btn-ghost" onClick={onBackup}><FloppyDisk size={17} />Backup</button>
+        {syncStatus.state !== 'off' && (
+          <button className={`sync-status is-${syncStatus.state}`} onClick={onSettings} title="Sync between devices">
+            {syncLine(syncStatus)}
+          </button>
+        )}
       </div>
     </aside>
   );
+}
+
+const clock = (at: number) => new Date(at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+
+function syncLine(s: SyncStatus) {
+  switch (s.state) {
+    case 'syncing':
+      return <><ArrowsClockwise size={14} />Syncing\u2026</>;
+    case 'ok':
+      return <><CloudCheck size={14} />Synced at {clock(s.at)}</>;
+    case 'offline':
+      return <><CloudSlash size={14} />Offline. Will sync when you\u2019re back online.</>;
+    case 'error':
+      return <><CloudWarning size={14} />Sync problem. Open Settings.</>;
+    default:
+      return null;
+  }
 }

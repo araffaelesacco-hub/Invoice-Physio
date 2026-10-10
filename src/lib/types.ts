@@ -57,10 +57,17 @@ export interface Invoice {
   paidVia: PaymentMethod | null;
   /** When the paid receipt was last sent. */
   receiptSentAt: string | null;
+  /** Milliseconds since 1970: when it was created and last changed. Sync keeps the newest version. */
+  createdAt?: number;
+  updatedAt?: number;
   sample?: true;
 }
 
 export interface Data {
   settings: Settings;
   invoices: Invoice[];
+  /** When Settings last changed (ms). Sync keeps the newest settings; 0 for the samples. */
+  settingsUpdatedAt?: number;
+  /** Deleted invoice id → when (ms), so a delete on one device reaches the other. */
+  deleted?: Record<string, number>;
 }
